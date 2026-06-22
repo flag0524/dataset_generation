@@ -1,100 +1,100 @@
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 대해 설명하라."}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 대해 설명하라."}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 대해 설명하라."}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 대해 설명하라."}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 대해 설명하라."}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
-{"messages": [{"role": "user", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분에 대해 설명하라."}, {"role": "assistant", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다."}]}
-{"messages": [{"role": "user", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.에 대해 설명하라."}, {"role": "assistant", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다."}]}
-{"messages": [{"role": "user", "content": "고충민원은 14일 이내에 처리한다.에 대해 설명하라."}, {"role": "assistant", "content": "고충민원은 14일 이내에 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성에 대해 설명하라."}, {"role": "assistant", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다."}]}
-{"messages": [{"role": "user", "content": "처리 기한 연장은 1회에 한하여 가능하다.에 대해 설명하라."}, {"role": "assistant", "content": "처리 기한 연장은 1회에 한하여 가능하다."}]}
-{"messages": [{"role": "user", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로에 대해 설명하라."}, {"role": "assistant", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리는 행정지원과가 총괄한다.에 대해 설명하라."}, {"role": "assistant", "content": "민원 처리는 행정지원과가 총괄한다."}]}
-{"messages": [{"role": "user", "content": "전문 분야 민원은 해당 소관 부서로 이관한다.에 대해 설명하라."}, {"role": "assistant", "content": "전문 분야 민원은 해당 소관 부서로 이관한다."}]}
-{"messages": [{"role": "user", "content": "이관 시 접수일은 최초 접수일을 유지한다.에 대해 설명하라."}, {"role": "assistant", "content": "이관 시 접수일은 최초 접수일을 유지한다."}]}
-{"messages": [{"role": "user", "content": "자주 묻는 질문에 대해 설명하라."}, {"role": "assistant", "content": "자주 묻는 질문"}]}
-{"messages": [{"role": "user", "content": "민원 처리 결과는 어떻게 통보하나.에 대해 설명하라."}, {"role": "assistant", "content": "민원 처리 결과는 어떻게 통보하나."}]}
-{"messages": [{"role": "user", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다.에 대해 설명하라."}, {"role": "assistant", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다."}]}
-{"messages": [{"role": "user", "content": "민원을 취하할 수 있나.에 대해 설명하라."}, {"role": "assistant", "content": "민원을 취하할 수 있나."}]}
-{"messages": [{"role": "user", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.에 대해 설명하라."}, {"role": "assistant", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다."}]}
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
-{"messages": [{"role": "user", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다."}]}
-{"messages": [{"role": "user", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다."}]}
-{"messages": [{"role": "user", "content": "고충민원은 14일 이내에 처리한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "고충민원은 14일 이내에 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다."}]}
-{"messages": [{"role": "user", "content": "처리 기한 연장은 1회에 한하여 가능하다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "처리 기한 연장은 1회에 한하여 가능하다."}]}
-{"messages": [{"role": "user", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리는 행정지원과가 총괄한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원 처리는 행정지원과가 총괄한다."}]}
-{"messages": [{"role": "user", "content": "전문 분야 민원은 해당 소관 부서로 이관한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "전문 분야 민원은 해당 소관 부서로 이관한다."}]}
-{"messages": [{"role": "user", "content": "이관 시 접수일은 최초 접수일을 유지한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "이관 시 접수일은 최초 접수일을 유지한다."}]}
-{"messages": [{"role": "user", "content": "자주 묻는 질문에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "자주 묻는 질문"}]}
-{"messages": [{"role": "user", "content": "민원 처리 결과는 어떻게 통보하나.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원 처리 결과는 어떻게 통보하나."}]}
-{"messages": [{"role": "user", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다."}]}
-{"messages": [{"role": "user", "content": "민원을 취하할 수 있나.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "민원을 취하할 수 있나."}]}
-{"messages": [{"role": "user", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다."}]}
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
-{"messages": [{"role": "user", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다."}]}
-{"messages": [{"role": "user", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다."}]}
-{"messages": [{"role": "user", "content": "고충민원은 14일 이내에 처리한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "고충민원은 14일 이내에 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다."}]}
-{"messages": [{"role": "user", "content": "처리 기한 연장은 1회에 한하여 가능하다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "처리 기한 연장은 1회에 한하여 가능하다."}]}
-{"messages": [{"role": "user", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리는 행정지원과가 총괄한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원 처리는 행정지원과가 총괄한다."}]}
-{"messages": [{"role": "user", "content": "전문 분야 민원은 해당 소관 부서로 이관한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "전문 분야 민원은 해당 소관 부서로 이관한다."}]}
-{"messages": [{"role": "user", "content": "이관 시 접수일은 최초 접수일을 유지한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "이관 시 접수일은 최초 접수일을 유지한다."}]}
-{"messages": [{"role": "user", "content": "자주 묻는 질문에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "자주 묻는 질문"}]}
-{"messages": [{"role": "user", "content": "민원 처리 결과는 어떻게 통보하나.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원 처리 결과는 어떻게 통보하나."}]}
-{"messages": [{"role": "user", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다."}]}
-{"messages": [{"role": "user", "content": "민원을 취하할 수 있나.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "민원을 취하할 수 있나."}]}
-{"messages": [{"role": "user", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다."}]}
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
-{"messages": [{"role": "user", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다."}]}
-{"messages": [{"role": "user", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다."}]}
-{"messages": [{"role": "user", "content": "고충민원은 14일 이내에 처리한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "고충민원은 14일 이내에 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다."}]}
-{"messages": [{"role": "user", "content": "처리 기한 연장은 1회에 한하여 가능하다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "처리 기한 연장은 1회에 한하여 가능하다."}]}
-{"messages": [{"role": "user", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리는 행정지원과가 총괄한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원 처리는 행정지원과가 총괄한다."}]}
-{"messages": [{"role": "user", "content": "전문 분야 민원은 해당 소관 부서로 이관한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "전문 분야 민원은 해당 소관 부서로 이관한다."}]}
-{"messages": [{"role": "user", "content": "이관 시 접수일은 최초 접수일을 유지한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "이관 시 접수일은 최초 접수일을 유지한다."}]}
-{"messages": [{"role": "user", "content": "자주 묻는 질문에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "자주 묻는 질문"}]}
-{"messages": [{"role": "user", "content": "민원 처리 결과는 어떻게 통보하나.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원 처리 결과는 어떻게 통보하나."}]}
-{"messages": [{"role": "user", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다."}]}
-{"messages": [{"role": "user", "content": "민원을 취하할 수 있나.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "민원을 취하할 수 있나."}]}
-{"messages": [{"role": "user", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.에 관하여 기술하라. (변형 3)"}, {"role": "assistant", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다."}]}
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
-{"messages": [{"role": "user", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다."}]}
-{"messages": [{"role": "user", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "일반민원은 접수일로부터 7일 이내에 처리해야 한다."}]}
-{"messages": [{"role": "user", "content": "고충민원은 14일 이내에 처리한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "고충민원은 14일 이내에 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다."}]}
-{"messages": [{"role": "user", "content": "처리 기한 연장은 1회에 한하여 가능하다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "처리 기한 연장은 1회에 한하여 가능하다."}]}
-{"messages": [{"role": "user", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다."}]}
-{"messages": [{"role": "user", "content": "민원 처리는 행정지원과가 총괄한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원 처리는 행정지원과가 총괄한다."}]}
-{"messages": [{"role": "user", "content": "전문 분야 민원은 해당 소관 부서로 이관한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "전문 분야 민원은 해당 소관 부서로 이관한다."}]}
-{"messages": [{"role": "user", "content": "이관 시 접수일은 최초 접수일을 유지한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "이관 시 접수일은 최초 접수일을 유지한다."}]}
-{"messages": [{"role": "user", "content": "자주 묻는 질문에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "자주 묻는 질문"}]}
-{"messages": [{"role": "user", "content": "민원 처리 결과는 어떻게 통보하나.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원 처리 결과는 어떻게 통보하나."}]}
-{"messages": [{"role": "user", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "처리 결과는 신청인이 선택한 방식으로 통보한다."}]}
-{"messages": [{"role": "user", "content": "민원을 취하할 수 있나.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "민원을 취하할 수 있나."}]}
-{"messages": [{"role": "user", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.에 관하여 기술하라. (변형 4)"}, {"role": "assistant", "content": "처리 완료 전까지 신청인은 민원을 취하할 수 있다."}]}
-{"messages": [{"role": "user", "content": "지방행정 민원 처리 업무 매뉴얼에 관하여 기술하라. (변형 5)"}, {"role": "assistant", "content": "지방행정 민원 처리 업무 매뉴얼"}]}
-{"messages": [{"role": "user", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를에 관하여 기술하라. (변형 5)"}, {"role": "assistant", "content": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다."}]}
-{"messages": [{"role": "user", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한에 관하여 기술하라. (변형 5)"}, {"role": "assistant", "content": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다."}]}
-{"messages": [{"role": "user", "content": "민원 접수 절차에 관하여 기술하라. (변형 5)"}, {"role": "assistant", "content": "민원 접수 절차"}]}
-{"messages": [{"role": "user", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다에 관하여 기술하라. (변형 5)"}, {"role": "assistant", "content": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다."}]}
+{"messages": [{"role": "user", "content": "plan.md — 실행 계획서에 대해 설명하라."}, {"role": "assistant", "content": "plan.md — 실행 계획서"}]}
+{"messages": [{"role": "user", "content": "> 근거: `docs/goal.md`.에 대해 설명하라."}, {"role": "assistant", "content": "> 근거: `docs/goal.md`."}]}
+{"messages": [{"role": "user", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 에 대해 설명하라."}, {"role": "assistant", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 시 직전 단계로 회귀한다."}]}
+{"messages": [{"role": "user", "content": "아키텍처 (PoC)에 대해 설명하라."}, {"role": "assistant", "content": "아키텍처 (PoC)"}]}
+{"messages": [{"role": "user", "content": "rag_poc/에 대해 설명하라."}, {"role": "assistant", "content": "rag_poc/"}]}
+{"messages": [{"role": "user", "content": "models.py        # 도메인 모델: Doc에 대해 설명하라."}, {"role": "assistant", "content": "models.py        # 도메인 모델: Document, Chunk, User, SecurityLevel, RetrievedChunk"}]}
+{"messages": [{"role": "user", "content": "deidentify.py    # 비식별화(주민번호/전에 대해 설명하라."}, {"role": "assistant", "content": "deidentify.py    # 비식별화(주민번호/전화/이메일 마스킹)"}]}
+{"messages": [{"role": "user", "content": "ingest.py        # 문서 처리 파이프라인에 대해 설명하라."}, {"role": "assistant", "content": "ingest.py        # 문서 처리 파이프라인: 파싱→비식별화→청킹→메타태깅"}]}
+{"messages": [{"role": "user", "content": "embedding.py     # 교체형 임베딩(기본:에 대해 설명하라."}, {"role": "assistant", "content": "embedding.py     # 교체형 임베딩(기본: 해시기반 결정적 임베더, 옵션: sentence-transformers)"}]}
+{"messages": [{"role": "user", "content": "vectorstore.py   # 임베디드 벡터 저장소에 대해 설명하라."}, {"role": "assistant", "content": "vectorstore.py   # 임베디드 벡터 저장소(코사인) + 메타데이터 권한필터"}]}
+{"messages": [{"role": "user", "content": "bm25.py          # BM25 희소 검색에 대해 설명하라."}, {"role": "assistant", "content": "bm25.py          # BM25 희소 검색"}]}
+{"messages": [{"role": "user", "content": "retriever.py     # 하이브리드 검색 + 에 대해 설명하라."}, {"role": "assistant", "content": "retriever.py     # 하이브리드 검색 + 권한필터① + 리랭킹(Top-N)"}]}
+{"messages": [{"role": "user", "content": "llm.py           # 교체형 LLM 인터페에 대해 설명하라."}, {"role": "assistant", "content": "llm.py           # 교체형 LLM 인터페이스 + MockLLM(인용 기반 추출 답변)"}]}
+{"messages": [{"role": "user", "content": "orchestrator.py  # RAG 파이프라인 +에 대해 설명하라."}, {"role": "assistant", "content": "orchestrator.py  # RAG 파이프라인 + 권한 후처리② + 인용 + 근거부족 억제"}]}
+{"messages": [{"role": "user", "content": "api.py           # FastAPI 엔드포에 대해 설명하라."}, {"role": "assistant", "content": "api.py           # FastAPI 엔드포인트(/ingest, /query)"}]}
+{"messages": [{"role": "user", "content": "golden/          # 골든셋(문서 + 질의에 대해 설명하라."}, {"role": "assistant", "content": "golden/          # 골든셋(문서 + 질의/정답)"}]}
+{"messages": [{"role": "user", "content": "설계 원칙(CLAUDE.md 준수): 단일 사용 추상화에 대해 설명하라."}, {"role": "assistant", "content": "설계 원칙(CLAUDE.md 준수): 단일 사용 추상화 금지, 요청 범위만 구현, 외부 무거운 의존성 없이 동작."}]}
+{"messages": [{"role": "user", "content": "문서체계 작성 → 검증: 4개 md가 docs/에 존재에 대해 설명하라."}, {"role": "assistant", "content": "문서체계 작성 → 검증: 4개 md가 docs/에 존재"}]}
+{"messages": [{"role": "user", "content": "goal/plan/status/tests 작성.에 대해 설명하라."}, {"role": "assistant", "content": "goal/plan/status/tests 작성."}]}
+{"messages": [{"role": "user", "content": "도메인 모델 + 비식별화 → 검증: `test_deid에 대해 설명하라."}, {"role": "assistant", "content": "도메인 모델 + 비식별화 → 검증: `test_deidentify` 통과"}]}
+{"messages": [{"role": "user", "content": "SecurityLevel(공개/내부/대외비/비밀) En에 대해 설명하라."}, {"role": "assistant", "content": "SecurityLevel(공개/내부/대외비/비밀) Enum, 역할↔등급 매핑"}]}
+{"messages": [{"role": "user", "content": "주민번호/전화/이메일 정규식 마스킹에 대해 설명하라."}, {"role": "assistant", "content": "주민번호/전화/이메일 정규식 마스킹"}]}
+{"messages": [{"role": "user", "content": "문서 처리 파이프라인(ingest) → 검증: `tes에 대해 설명하라."}, {"role": "assistant", "content": "문서 처리 파이프라인(ingest) → 검증: `test_ingest` (G1, G5)"}]}
+{"messages": [{"role": "user", "content": "텍스트/표(마크다운) 파싱, 문단 단위 청킹(크기·중첩에 대해 설명하라."}, {"role": "assistant", "content": "텍스트/표(마크다운) 파싱, 문단 단위 청킹(크기·중첩), 메타데이터(보안등급·부서·유형) 태깅"}]}
+{"messages": [{"role": "user", "content": "청킹 전 비식별화 적용에 대해 설명하라."}, {"role": "assistant", "content": "청킹 전 비식별화 적용"}]}
+{"messages": [{"role": "user", "content": "임베딩 + 벡터스토어 + BM25 → 검증: `test에 대해 설명하라."}, {"role": "assistant", "content": "임베딩 + 벡터스토어 + BM25 → 검증: `test_retrieval_components`"}]}
+{"messages": [{"role": "user", "content": "결정적 임베더(외부 의존 없이 테스트 가능), 코사인 에 대해 설명하라."}, {"role": "assistant", "content": "결정적 임베더(외부 의존 없이 테스트 가능), 코사인 유사도"}]}
+{"messages": [{"role": "user", "content": "메타데이터 권한필터, BM25 점수에 대해 설명하라."}, {"role": "assistant", "content": "메타데이터 권한필터, BM25 점수"}]}
+{"messages": [{"role": "user", "content": "하이브리드 리트리버 → 검증: `test_retriev에 대해 설명하라."}, {"role": "assistant", "content": "하이브리드 리트리버 → 검증: `test_retriever` (G2, G4 일부)"}]}
+{"messages": [{"role": "user", "content": "Dense+BM25 정규화 가중 결합(Top-K) → 에 대해 설명하라."}, {"role": "assistant", "content": "Dense+BM25 정규화 가중 결합(Top-K) → 권한필터① → 리랭킹 Top-N"}]}
+{"messages": [{"role": "user", "content": "권한 외 문서 제외 확인에 대해 설명하라."}, {"role": "assistant", "content": "권한 외 문서 제외 확인"}]}
+{"messages": [{"role": "user", "content": "LLM + 오케스트레이터 → 검증: `test_orch에 대해 설명하라."}, {"role": "assistant", "content": "LLM + 오케스트레이터 → 검증: `test_orchestrator` (G3, G4)"}]}
+{"messages": [{"role": "user", "content": "MockLLM: 검색 컨텍스트에서 답 추출, 출처ID 에 대해 설명하라."}, {"role": "assistant", "content": "MockLLM: 검색 컨텍스트에서 답 추출, 출처ID 인용"}]}
+{"messages": [{"role": "user", "content": "근거 부족(점수 임계 미달) → \"관련 문서를 찾지 못에 대해 설명하라."}, {"role": "assistant", "content": "근거 부족(점수 임계 미달) → \"관련 문서를 찾지 못함\""}]}
+{"messages": [{"role": "user", "content": "응답 후처리② 권한 재검증에 대해 설명하라."}, {"role": "assistant", "content": "응답 후처리② 권한 재검증"}]}
+{"messages": [{"role": "user", "content": "골든셋 + 평가 → 검증: `test_evaluatio에 대해 설명하라."}, {"role": "assistant", "content": "골든셋 + 평가 → 검증: `test_evaluation` (G2 Context Recall≥0.9)"}]}
+{"messages": [{"role": "user", "content": "골든셋 문서/질의 구성, Context Recall·인에 대해 설명하라."}, {"role": "assistant", "content": "골든셋 문서/질의 구성, Context Recall·인용 정확도 계산"}]}
+{"messages": [{"role": "user", "content": "FastAPI + README → 검증: 앱 impor에 대해 설명하라."}, {"role": "assistant", "content": "FastAPI + README → 검증: 앱 import 및 TestClient 스모크"}]}
+{"messages": [{"role": "user", "content": "/ingest, /query 엔드포인트에 대해 설명하라."}, {"role": "assistant", "content": "/ingest, /query 엔드포인트"}]}
+{"messages": [{"role": "user", "content": "전체 검증 → status.md 갱신에 대해 설명하라."}, {"role": "assistant", "content": "전체 검증 → status.md 갱신"}]}
+{"messages": [{"role": "user", "content": "`pytest` 전체 통과, G1~G5 PASS 기록에 대해 설명하라."}, {"role": "assistant", "content": "`pytest` 전체 통과, G1~G5 PASS 기록"}]}
+{"messages": [{"role": "user", "content": "의사결정 필요 시점에 대해 설명하라."}, {"role": "assistant", "content": "의사결정 필요 시점"}]}
+{"messages": [{"role": "user", "content": "외부 임베딩 모델(sentence-transformer에 대해 설명하라."}, {"role": "assistant", "content": "외부 임베딩 모델(sentence-transformers) 다운로드 필요 여부 → **기본은 결정적 임베더(오프라인)**, 사용자가 원하면 교체."}]}
+{"messages": [{"role": "user", "content": "(이미 경량 스택으로 합의됨, 추가 질문 불필요)에 대해 설명하라."}, {"role": "assistant", "content": "(이미 경량 스택으로 합의됨, 추가 질문 불필요)"}]}
+{"messages": [{"role": "user", "content": "그 외 기획서 해석상 모호함 발생 시 사용자에게 질문.에 대해 설명하라."}, {"role": "assistant", "content": "그 외 기획서 해석상 모호함 발생 시 사용자에게 질문."}]}
+{"messages": [{"role": "user", "content": "plan.md — 실행 계획서에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "plan.md — 실행 계획서"}]}
+{"messages": [{"role": "user", "content": "> 근거: `docs/goal.md`.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "> 근거: `docs/goal.md`."}]}
+{"messages": [{"role": "user", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 시 직전 단계로 회귀한다."}]}
+{"messages": [{"role": "user", "content": "아키텍처 (PoC)에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "아키텍처 (PoC)"}]}
+{"messages": [{"role": "user", "content": "rag_poc/에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "rag_poc/"}]}
+{"messages": [{"role": "user", "content": "models.py        # 도메인 모델: Doc에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "models.py        # 도메인 모델: Document, Chunk, User, SecurityLevel, RetrievedChunk"}]}
+{"messages": [{"role": "user", "content": "deidentify.py    # 비식별화(주민번호/전에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "deidentify.py    # 비식별화(주민번호/전화/이메일 마스킹)"}]}
+{"messages": [{"role": "user", "content": "ingest.py        # 문서 처리 파이프라인에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "ingest.py        # 문서 처리 파이프라인: 파싱→비식별화→청킹→메타태깅"}]}
+{"messages": [{"role": "user", "content": "embedding.py     # 교체형 임베딩(기본:에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "embedding.py     # 교체형 임베딩(기본: 해시기반 결정적 임베더, 옵션: sentence-transformers)"}]}
+{"messages": [{"role": "user", "content": "vectorstore.py   # 임베디드 벡터 저장소에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "vectorstore.py   # 임베디드 벡터 저장소(코사인) + 메타데이터 권한필터"}]}
+{"messages": [{"role": "user", "content": "bm25.py          # BM25 희소 검색에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "bm25.py          # BM25 희소 검색"}]}
+{"messages": [{"role": "user", "content": "retriever.py     # 하이브리드 검색 + 에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "retriever.py     # 하이브리드 검색 + 권한필터① + 리랭킹(Top-N)"}]}
+{"messages": [{"role": "user", "content": "llm.py           # 교체형 LLM 인터페에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "llm.py           # 교체형 LLM 인터페이스 + MockLLM(인용 기반 추출 답변)"}]}
+{"messages": [{"role": "user", "content": "orchestrator.py  # RAG 파이프라인 +에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "orchestrator.py  # RAG 파이프라인 + 권한 후처리② + 인용 + 근거부족 억제"}]}
+{"messages": [{"role": "user", "content": "api.py           # FastAPI 엔드포에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "api.py           # FastAPI 엔드포인트(/ingest, /query)"}]}
+{"messages": [{"role": "user", "content": "golden/          # 골든셋(문서 + 질의에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "golden/          # 골든셋(문서 + 질의/정답)"}]}
+{"messages": [{"role": "user", "content": "설계 원칙(CLAUDE.md 준수): 단일 사용 추상화에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "설계 원칙(CLAUDE.md 준수): 단일 사용 추상화 금지, 요청 범위만 구현, 외부 무거운 의존성 없이 동작."}]}
+{"messages": [{"role": "user", "content": "문서체계 작성 → 검증: 4개 md가 docs/에 존재에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "문서체계 작성 → 검증: 4개 md가 docs/에 존재"}]}
+{"messages": [{"role": "user", "content": "goal/plan/status/tests 작성.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "goal/plan/status/tests 작성."}]}
+{"messages": [{"role": "user", "content": "도메인 모델 + 비식별화 → 검증: `test_deid에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "도메인 모델 + 비식별화 → 검증: `test_deidentify` 통과"}]}
+{"messages": [{"role": "user", "content": "SecurityLevel(공개/내부/대외비/비밀) En에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "SecurityLevel(공개/내부/대외비/비밀) Enum, 역할↔등급 매핑"}]}
+{"messages": [{"role": "user", "content": "주민번호/전화/이메일 정규식 마스킹에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "주민번호/전화/이메일 정규식 마스킹"}]}
+{"messages": [{"role": "user", "content": "문서 처리 파이프라인(ingest) → 검증: `tes에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "문서 처리 파이프라인(ingest) → 검증: `test_ingest` (G1, G5)"}]}
+{"messages": [{"role": "user", "content": "텍스트/표(마크다운) 파싱, 문단 단위 청킹(크기·중첩에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "텍스트/표(마크다운) 파싱, 문단 단위 청킹(크기·중첩), 메타데이터(보안등급·부서·유형) 태깅"}]}
+{"messages": [{"role": "user", "content": "청킹 전 비식별화 적용에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "청킹 전 비식별화 적용"}]}
+{"messages": [{"role": "user", "content": "임베딩 + 벡터스토어 + BM25 → 검증: `test에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "임베딩 + 벡터스토어 + BM25 → 검증: `test_retrieval_components`"}]}
+{"messages": [{"role": "user", "content": "결정적 임베더(외부 의존 없이 테스트 가능), 코사인 에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "결정적 임베더(외부 의존 없이 테스트 가능), 코사인 유사도"}]}
+{"messages": [{"role": "user", "content": "메타데이터 권한필터, BM25 점수에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "메타데이터 권한필터, BM25 점수"}]}
+{"messages": [{"role": "user", "content": "하이브리드 리트리버 → 검증: `test_retriev에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "하이브리드 리트리버 → 검증: `test_retriever` (G2, G4 일부)"}]}
+{"messages": [{"role": "user", "content": "Dense+BM25 정규화 가중 결합(Top-K) → 에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "Dense+BM25 정규화 가중 결합(Top-K) → 권한필터① → 리랭킹 Top-N"}]}
+{"messages": [{"role": "user", "content": "권한 외 문서 제외 확인에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "권한 외 문서 제외 확인"}]}
+{"messages": [{"role": "user", "content": "LLM + 오케스트레이터 → 검증: `test_orch에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "LLM + 오케스트레이터 → 검증: `test_orchestrator` (G3, G4)"}]}
+{"messages": [{"role": "user", "content": "MockLLM: 검색 컨텍스트에서 답 추출, 출처ID 에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "MockLLM: 검색 컨텍스트에서 답 추출, 출처ID 인용"}]}
+{"messages": [{"role": "user", "content": "근거 부족(점수 임계 미달) → \"관련 문서를 찾지 못에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "근거 부족(점수 임계 미달) → \"관련 문서를 찾지 못함\""}]}
+{"messages": [{"role": "user", "content": "응답 후처리② 권한 재검증에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "응답 후처리② 권한 재검증"}]}
+{"messages": [{"role": "user", "content": "골든셋 + 평가 → 검증: `test_evaluatio에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "골든셋 + 평가 → 검증: `test_evaluation` (G2 Context Recall≥0.9)"}]}
+{"messages": [{"role": "user", "content": "골든셋 문서/질의 구성, Context Recall·인에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "골든셋 문서/질의 구성, Context Recall·인용 정확도 계산"}]}
+{"messages": [{"role": "user", "content": "FastAPI + README → 검증: 앱 impor에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "FastAPI + README → 검증: 앱 import 및 TestClient 스모크"}]}
+{"messages": [{"role": "user", "content": "/ingest, /query 엔드포인트에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "/ingest, /query 엔드포인트"}]}
+{"messages": [{"role": "user", "content": "전체 검증 → status.md 갱신에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "전체 검증 → status.md 갱신"}]}
+{"messages": [{"role": "user", "content": "`pytest` 전체 통과, G1~G5 PASS 기록에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "`pytest` 전체 통과, G1~G5 PASS 기록"}]}
+{"messages": [{"role": "user", "content": "의사결정 필요 시점에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "의사결정 필요 시점"}]}
+{"messages": [{"role": "user", "content": "외부 임베딩 모델(sentence-transformer에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "외부 임베딩 모델(sentence-transformers) 다운로드 필요 여부 → **기본은 결정적 임베더(오프라인)**, 사용자가 원하면 교체."}]}
+{"messages": [{"role": "user", "content": "(이미 경량 스택으로 합의됨, 추가 질문 불필요)에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "(이미 경량 스택으로 합의됨, 추가 질문 불필요)"}]}
+{"messages": [{"role": "user", "content": "그 외 기획서 해석상 모호함 발생 시 사용자에게 질문.에 관하여 기술하라. (변형 1)"}, {"role": "assistant", "content": "그 외 기획서 해석상 모호함 발생 시 사용자에게 질문."}]}
+{"messages": [{"role": "user", "content": "plan.md — 실행 계획서에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "plan.md — 실행 계획서"}]}
+{"messages": [{"role": "user", "content": "> 근거: `docs/goal.md`.에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "> 근거: `docs/goal.md`."}]}
+{"messages": [{"role": "user", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "각 단계는 **활동 → 검증** 형식이며, 검증 미달 시 직전 단계로 회귀한다."}]}
+{"messages": [{"role": "user", "content": "아키텍처 (PoC)에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "아키텍처 (PoC)"}]}
+{"messages": [{"role": "user", "content": "rag_poc/에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "rag_poc/"}]}
+{"messages": [{"role": "user", "content": "models.py        # 도메인 모델: Doc에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "models.py        # 도메인 모델: Document, Chunk, User, SecurityLevel, RetrievedChunk"}]}
+{"messages": [{"role": "user", "content": "deidentify.py    # 비식별화(주민번호/전에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "deidentify.py    # 비식별화(주민번호/전화/이메일 마스킹)"}]}
+{"messages": [{"role": "user", "content": "ingest.py        # 문서 처리 파이프라인에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "ingest.py        # 문서 처리 파이프라인: 파싱→비식별화→청킹→메타태깅"}]}
+{"messages": [{"role": "user", "content": "embedding.py     # 교체형 임베딩(기본:에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "embedding.py     # 교체형 임베딩(기본: 해시기반 결정적 임베더, 옵션: sentence-transformers)"}]}
+{"messages": [{"role": "user", "content": "vectorstore.py   # 임베디드 벡터 저장소에 관하여 기술하라. (변형 2)"}, {"role": "assistant", "content": "vectorstore.py   # 임베디드 벡터 저장소(코사인) + 메타데이터 권한필터"}]}

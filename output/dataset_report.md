@@ -1,8 +1,8 @@
-# Dataset Report — sample_admin.txt
+# Dataset Report — plan.md
 
-- 도메인: 공공행정
-- 목적: 지방행정 민원 처리 업무 매뉴얼
-- 키워드: 처리, 민원, 민원을, 한다, 접수, 담당, 접수된, 기한을, 민원은, 담당자는
+- 도메인: 일반
+- 목적: plan.md — 실행 계획서
+- 키워드: 검증, py, test, ingest, 문서, md, 비식별화, 권한필터, BM, 인용
 - 지식 추출 모드: llm
 
 ## 검증 결과
