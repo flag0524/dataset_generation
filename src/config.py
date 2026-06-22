@@ -1,0 +1,26 @@
+# 시스템 전역 설정과 환경 변수 로딩을 담당하는 모듈
+import os
+from dataclasses import dataclass
+
+
+@dataclass
+class Config:
+    # LLM (Ollama) 설정
+    ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.1")
+    # Ollama 미가용 시 결정론적 mock 모드로 동작 (테스트 가능성 확보)
+    use_mock_llm: bool = os.getenv("USE_MOCK_LLM", "auto") != "false"
+
+    # 출력 경로
+    output_dir: str = os.getenv("OUTPUT_DIR", "output")
+
+    # 검증 기준 (TRD §5, PRD §9)
+    min_rows: int = 100
+    recommended_rows: int = 1000
+    quality_pass_score: int = 90
+
+    # 채팅 템플릿 기본값 (TRD §4.8)
+    chat_template: str = os.getenv("CHAT_TEMPLATE", "chatml")
+
+
+config = Config()

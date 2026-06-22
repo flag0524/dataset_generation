@@ -1,0 +1,1602 @@
+[
+  {
+    "id": "0001",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0002",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0003",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0004",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0005",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0006",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "output": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0007",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "output": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0008",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "고충민원은 14일 이내에 처리한다.",
+    "output": "고충민원은 14일 이내에 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0009",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "output": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0010",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "output": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0011",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "output": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0012",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원 처리는 행정지원과가 총괄한다.",
+    "output": "민원 처리는 행정지원과가 총괄한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0013",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "output": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0014",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "output": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0015",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "자주 묻는 질문",
+    "output": "자주 묻는 질문",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0016",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원 처리 결과는 어떻게 통보하나.",
+    "output": "민원 처리 결과는 어떻게 통보하나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0017",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "output": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0018",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "민원을 취하할 수 있나.",
+    "output": "민원을 취하할 수 있나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0019",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 관점에서 다음 내용을 설명하라.",
+    "input": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "output": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0020",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0021",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0022",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0023",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0024",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0025",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "output": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0026",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "output": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0027",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "고충민원은 14일 이내에 처리한다.",
+    "output": "고충민원은 14일 이내에 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0028",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "output": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0029",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "output": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0030",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "output": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0031",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원 처리는 행정지원과가 총괄한다.",
+    "output": "민원 처리는 행정지원과가 총괄한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0032",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "output": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0033",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "output": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0034",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "자주 묻는 질문",
+    "output": "자주 묻는 질문",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0035",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원 처리 결과는 어떻게 통보하나.",
+    "output": "민원 처리 결과는 어떻게 통보하나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0036",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "output": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0037",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "민원을 취하할 수 있나.",
+    "output": "민원을 취하할 수 있나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0038",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 1)",
+    "input": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "output": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0039",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0040",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0041",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0042",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0043",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0044",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "output": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0045",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "output": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0046",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "고충민원은 14일 이내에 처리한다.",
+    "output": "고충민원은 14일 이내에 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0047",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "output": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0048",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "output": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0049",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "output": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0050",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원 처리는 행정지원과가 총괄한다.",
+    "output": "민원 처리는 행정지원과가 총괄한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0051",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "output": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0052",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "output": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0053",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "자주 묻는 질문",
+    "output": "자주 묻는 질문",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0054",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원 처리 결과는 어떻게 통보하나.",
+    "output": "민원 처리 결과는 어떻게 통보하나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0055",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "output": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0056",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "민원을 취하할 수 있나.",
+    "output": "민원을 취하할 수 있나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0057",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 2)",
+    "input": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "output": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0058",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0059",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0060",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0061",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0062",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0063",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "output": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0064",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "output": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0065",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "고충민원은 14일 이내에 처리한다.",
+    "output": "고충민원은 14일 이내에 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0066",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "output": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0067",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "output": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0068",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "output": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0069",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원 처리는 행정지원과가 총괄한다.",
+    "output": "민원 처리는 행정지원과가 총괄한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0070",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "output": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0071",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "output": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0072",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "자주 묻는 질문",
+    "output": "자주 묻는 질문",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0073",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원 처리 결과는 어떻게 통보하나.",
+    "output": "민원 처리 결과는 어떻게 통보하나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0074",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "output": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0075",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "민원을 취하할 수 있나.",
+    "output": "민원을 취하할 수 있나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0076",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 3)",
+    "input": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "output": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0077",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0078",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0079",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0080",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0081",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0082",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "output": "접수 담당자는 민원의 종류를 일반민원과 고충민원으로 분류한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0083",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "output": "일반민원은 접수일로부터 7일 이내에 처리해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0084",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "고충민원은 14일 이내에 처리한다.",
+    "output": "고충민원은 14일 이내에 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0085",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "output": "민원 처리 기한을 초과하는 경우 담당자는 사유서를 작성해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0086",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "output": "처리 기한 연장은 1회에 한하여 가능하다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0087",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "output": "동일 민원이 중복 접수된 경우 최초 접수 건을 기준으로 처리한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0088",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원 처리는 행정지원과가 총괄한다.",
+    "output": "민원 처리는 행정지원과가 총괄한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0089",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "output": "전문 분야 민원은 해당 소관 부서로 이관한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0090",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "output": "이관 시 접수일은 최초 접수일을 유지한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0091",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "자주 묻는 질문",
+    "output": "자주 묻는 질문",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0092",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원 처리 결과는 어떻게 통보하나.",
+    "output": "민원 처리 결과는 어떻게 통보하나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0093",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "output": "처리 결과는 신청인이 선택한 방식으로 통보한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0094",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "민원을 취하할 수 있나.",
+    "output": "민원을 취하할 수 있나.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0095",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 4)",
+    "input": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "output": "처리 완료 전까지 신청인은 민원을 취하할 수 있다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0096",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 5)",
+    "input": "지방행정 민원 처리 업무 매뉴얼",
+    "output": "지방행정 민원 처리 업무 매뉴얼",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0097",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 5)",
+    "input": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "output": "본 매뉴얼은 지방자치단체 민원 처리 업무의 표준 절차를 규정한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0098",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 5)",
+    "input": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "output": "행정안전 담당 부서는 접수된 민원을 분류하고 처리 기한을 준수해야 한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0099",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 5)",
+    "input": "민원 접수 절차",
+    "output": "민원 접수 절차",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  },
+  {
+    "id": "0100",
+    "domain": "공공행정",
+    "category": "knowledge",
+    "instruction": "지방행정 전문가 입장에서 다음 내용을 기술하라. (변형 5)",
+    "input": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "output": "민원은 방문, 우편, 온라인 행정 포털을 통해 접수한다.",
+    "metadata": {
+      "source": "sample_admin.txt",
+      "keyword": [
+        "처리",
+        "민원",
+        "민원을"
+      ]
+    }
+  }
+]
