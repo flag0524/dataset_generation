@@ -7,7 +7,7 @@ from dataclasses import dataclass
 class Config:
     # LLM (Ollama) 설정
     ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.1")
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "gemma4:31b-cloud")
     # Ollama 미가용 시 결정론적 mock 모드로 동작 (테스트 가능성 확보)
     use_mock_llm: bool = os.getenv("USE_MOCK_LLM", "auto") != "false"
 

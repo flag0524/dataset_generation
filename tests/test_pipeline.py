@@ -34,6 +34,37 @@ def test_t2_rule_schema(result):
     assert all(schemas.validate_rule(r) for r in result["rules"])  # T2-1
 
 
+def test_t2_heuristic_mode(result):
+    # 테스트 환경(conftest)에서는 LLM 차단 → 휴리스틱 경로
+    assert result["extraction_mode"] == "heuristic"
+
+
+class _StubLLM:
+    # gemma4 응답을 흉내내는 stub (네트워크 없이 LLM 파싱 경로 검증)
+    def available(self):
+        return True
+
+    def generate_json(self, prompt, system=""):
+        return {
+            "knowledge": {f: f"{f} 내용" for f in pipeline.KNOWLEDGE_FIELDS},
+            "rules": [
+                {"rule_id": "R001", "condition": "민원 접수 시", "action": "7일 내 처리", "exception": "없음"},
+                {"condition": "기한 초과 시"},  # rule_id 누락 → 정규화로 보정
+                {"action": "무효 규칙"},        # condition 없음 → 제외
+            ],
+        }
+
+
+def test_t2_llm_extraction_path():
+    meta = {"domain": "공공행정", "purpose": "민원 처리", "keywords": ["민원"], "document_name": "x"}
+    out = pipeline.extract_knowledge("민원 접수 시 7일 내 처리해야 한다.", meta, _StubLLM())
+    assert out["extraction_mode"] == "llm"
+    assert list(out["knowledge"].keys()) == pipeline.KNOWLEDGE_FIELDS
+    assert len(out["rules"]) == 2  # 무효 규칙(condition 없음) 제외
+    assert all(schemas.validate_rule(r) for r in out["rules"])
+    assert out["rules"][1]["rule_id"] == "R002"  # 누락 rule_id 자동 보정
+
+
 # T3 LLM 데이터셋
 def test_t3_dataset_schemas(result):
     ds = result["datasets"]

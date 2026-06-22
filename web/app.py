@@ -34,6 +34,11 @@ async def generate(file: UploadFile = File(...)):
     os.replace(tmp_path, named)
     try:
         result = run(named)
+    except (ValueError, ModuleNotFoundError) as e:
+        # 지원하지 않는 포맷·파서 의존성 누락 등은 사용자에게 보이는 오류로 반환
+        return JSONResponse({"error": f"문서를 처리할 수 없습니다: {e}"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": f"생성 중 오류가 발생했습니다: {e}"}, status_code=500)
     finally:
         if os.path.exists(named):
             os.remove(named)

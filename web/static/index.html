@@ -182,8 +182,9 @@ $("run").onclick = async () => {
   try {
     const fd = new FormData(); fd.append("file", f);
     const res = await fetch("/api/generate", { method: "POST", body: fd });
-    if (!res.ok) throw new Error("서버 오류 " + res.status);
-    renderResult(await res.json());
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ("서버 오류 " + res.status));
+    renderResult(data);
   } catch (e) {
     renderError(e.message);
   } finally {
