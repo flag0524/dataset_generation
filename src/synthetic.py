@@ -9,7 +9,8 @@ _PARAPHRASE = [
 
 
 def dedupe(datasets: dict) -> dict:
-    # qa의 (question, answer) 중복을 제거하되 instruction/rag를 같은 인덱스로 정렬 유지.
+    # qa의 (question, answer) 중복을 제거하고 instruction을 같은 인덱스로 정렬 유지한다.
+    # rag는 원문 단위(qa/instruction과 길이가 다름)이며 중복이 없으므로 그대로 둔다.
     seen = set()
     keep = []
     for i, q in enumerate(datasets["qa"]):
@@ -18,7 +19,10 @@ def dedupe(datasets: dict) -> dict:
             continue
         seen.add(key)
         keep.append(i)
-    return {k: [v[i] for i in keep] for k, v in datasets.items()}
+    out = dict(datasets)
+    out["qa"] = [datasets["qa"][i] for i in keep]
+    out["instruction"] = [datasets["instruction"][i] for i in keep]
+    return out
 
 
 def augment(datasets: dict, target: int) -> dict:
@@ -26,6 +30,7 @@ def augment(datasets: dict, target: int) -> dict:
     # 이미 존재하는 (question, answer)와 충돌하는 변형은 건너뛰고 변형 번호를
     # 올려 항상 고유 행만 추가한다(증강 결과가 검증 dedup에서 줄지 않도록).
     base = len(datasets["qa"])
+    rag_base = len(datasets["rag"])
     if base == 0 or base >= target:
         return datasets
     out = {k: list(v) for k, v in datasets.items()}
@@ -39,7 +44,9 @@ def augment(datasets: dict, target: int) -> dict:
             seen.add(key)
             out["instruction"].append(_vary(datasets["instruction"][src_i], variant))
             out["qa"].append(nq)
-            out["rag"].append(_vary_rag(datasets["rag"][src_i], variant, len(out["rag"])))
+            # rag는 instruction/qa보다 짧을 수 있으므로(원문 단위) 자체 길이로 순환한다.
+            if rag_base:
+                out["rag"].append(_vary_rag(datasets["rag"][src_i % rag_base], variant, len(out["rag"])))
         idx += 1
         if idx % base == 0:
             variant += 1
@@ -55,6 +62,8 @@ def _apply(text, variant):
 def _vary(d, v):
     d = copy.deepcopy(d)
     d["instruction"] = _apply(d["instruction"], v)
+    # output도 함께 변형해 패딩 행이 원본과 같은 결과물을 반복하지 않게 한다.
+    d["output"] = _apply(d["output"], v)
     d["_synthetic"] = True
     return d
 
@@ -62,6 +71,8 @@ def _vary(d, v):
 def _vary_qa(d, v):
     d = copy.deepcopy(d)
     d["question"] = _apply(d["question"], v)
+    # answer == output 이므로 동일하게 변형해 정합을 유지한다.
+    d["answer"] = _apply(d["answer"], v)
     d["_synthetic"] = True
     return d
 

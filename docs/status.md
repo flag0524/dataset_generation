@@ -37,3 +37,4 @@
 ## 변경 로그
 - 2026-06-22: 문서체계 생성 → M0 결정 확정 → M1~M9 구현 및 검증 완료. pytest green.
 - 2026-06-23: 원본 qa 중복 시 검증 dedup 후 행 수가 min_rows 아래로 떨어져 FAIL되던 결함 수정. 검증 후 재증강 루프(synthetic.dedupe + 충돌 회피 augment) 추가, 회귀 테스트 1건 추가. pytest 12 passed.
+- 2026-06-23: STEP4 데이터셋 생성을 segment×과제앵글로 개편해 input(원문)과 output(결과물)이 겹치지 않게 함. RAG 패시지는 원문 단위 1건으로 분리(dedupe도 rag 비정렬 처리). OCR 로더의 Tesseract 경로를 환경변수(TESSERACT_CMD/TESSDATA_PREFIX)로 설정 가능하게 함. pytest 12 passed.

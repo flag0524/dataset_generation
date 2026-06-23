@@ -146,24 +146,78 @@ def _heuristic_extract(segs, meta):
 
 
 # ---------- STEP 4. LLM 데이터셋 생성 ----------
+# 한 segment에 적용하는 서로 다른 과제(앵글). instruction/output/question을 모두 다르게 만들어
+# input(원문 맥락)과 output(결과물)이 겹치지 않게 한다.
+_TASKS = [
+    ("{expert} 관점에서 다음 내용을 업무 담당자가 이해하도록 풀어서 설명하라.", "explain"),
+    ("다음 내용을 핵심만 한 문장으로 요약하라.", "summarize"),
+    ("다음 내용에서 '조건 → 처리' 형태의 업무 처리 기준을 도출하라.", "rule"),
+    ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
+]
+
+_OUTPUT_PROMPTS = {
+    "explain": "다음 내용을 업무 담당자가 이해하도록 2~3문장으로 풀어서 설명하라. 원문을 그대로 반복하지 말라.\n\n내용:\n{seg}",
+    "summarize": "다음 내용을 한 문장으로 요약하라.\n\n내용:\n{seg}",
+    "rule": "다음 내용에서 '조건 → 처리' 형태의 업무 기준을 한 문장으로 도출하라.\n\n내용:\n{seg}",
+    "terms": "다음 내용의 핵심 용어 2~3개와 각 의미를 간단히 정리하라.\n\n내용:\n{seg}",
+}
+
+
+def _derive_output(kind: str, seg: str, meta: dict, expert: str, llm: LLMClient) -> str:
+    # output은 input(원문)과 다른 결과물이어야 한다. LLM 가용 시 실제 생성, 아니면 결정론적 변환.
+    if llm.available():
+        resp = llm.generate(
+            _OUTPUT_PROMPTS[kind].format(seg=seg),
+            system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
+        ).strip()
+        if len(resp) >= 15:
+            return resp
+    return _heuristic_output(kind, seg, meta, expert)
+
+
+def _heuristic_output(kind: str, seg: str, meta: dict, expert: str) -> str:
+    # LLM 미가용 시에도 input과 구분되는(echo가 아닌) 결과물을 결정론적으로 만든다.
+    kw = ", ".join(meta["keywords"][:3]) or "핵심 사항"
+    if kind == "summarize":
+        return f"요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다."
+    if kind == "rule":
+        return f"처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다."
+    if kind == "terms":
+        return f"핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다."
+    return f"{expert}의 관점에서 보면 이 내용은 다음을 뜻한다 — {seg}. 이는 업무 수행에 필요한 사항이다."
+
+
+def _derive_question(kind: str, seg: str) -> str:
+    head = seg[:30]
+    return {
+        "explain": f"{head}의 내용을 설명해 줄 수 있나요?",
+        "summarize": f"{head}을(를) 요약하면 무엇인가요?",
+        "rule": f"{head}에 적용되는 처리 기준은 무엇인가요?",
+        "terms": f"{head}의 핵심 용어는 무엇인가요?",
+    }[kind]
+
+
 def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) -> dict:
     instructions, qas, rags = [], [], []
     expert = route_expert(meta["domain"])
     src = meta["document_name"]
     for i, seg in enumerate(extracted["segments"]):
-        q = f"{seg[:30]}에 대해 설명하라."
-        instructions.append({
-            "instruction": f"{expert} 관점에서 다음 내용을 설명하라.",
-            "input": seg[:40],
-            "output": seg,
-        })
-        qas.append({"question": q, "answer": seg, "source": src})
+        # RAG 패시지는 원문 단위로 1건만 (중복 패시지 방지)
         rags.append({
             "id": f"DOC-{i+1:04d}",
             "title": seg[:30],
             "content": seg,
             "metadata": {"keyword": meta["keywords"][:3]},
         })
+        # instruction/QA는 segment × 과제앵글로 서로 다른 고유 행을 만든다
+        for tmpl, kind in _TASKS:
+            output = _derive_output(kind, seg, meta, expert, llm)
+            instructions.append({
+                "instruction": tmpl.format(expert=expert),
+                "input": seg,
+                "output": output,
+            })
+            qas.append({"question": _derive_question(kind, seg), "answer": output, "source": src})
     return {"instruction": instructions, "qa": qas, "rag": rags}
 
 
