@@ -105,6 +105,27 @@ def test_t6_validation(result):
     assert v["format_consistent"] is True  # T6-5
 
 
+def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
+    # 원본 qa에 중복쌍이 있으면 중복 제거 후 행 수가 min_rows 아래로 떨어진다.
+    # 재증강 루프가 부족분을 채워 크기 게이트를 통과시키는지 검증한다 (회귀).
+    from src import runner
+
+    orig = runner.pipeline.generate_datasets
+
+    def dup_datasets(text, meta, extracted, llm):
+        ds = orig(text, meta, extracted, llm)
+        for i in range(10):  # 앞쪽 10개 qa를 동일 쌍으로 덮어써 중복 9개를 강제
+            ds["qa"][i] = dict(ds["qa"][0])
+        return ds
+
+    monkeypatch.setattr(runner.pipeline, "generate_datasets", dup_datasets)
+    v = runner.run(SAMPLE, out_dir=str(tmp_path))["validation"]
+    # 재증강 루프가 중복을 정리하고 부족분을 채워 크기 게이트를 통과해야 한다.
+    assert v["size_ok"] is True
+    assert v["row_count"] >= 100
+    assert v["status"] == "PASS"
+
+
 # T7 산출물 & 통합
 def test_t7_artifacts(result):
     out = result["output_dir"]

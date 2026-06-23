@@ -27,7 +27,7 @@
 범례: ✅ 완료 · 🟡 진행중 · ⬜ 대기 · ❌ 실패/블록
 
 ## 검증 결과 (tests.md 매트릭스)
-- `python -m pytest tests/ -q` → **9 passed**.
+- `python -m pytest tests/ -q` → **12 passed**.
 - 샘플(`samples/sample_admin.txt`): 도메인=공공행정, 전문가=지방행정 전문가, 100행, 품질점수 99, status=PASS.
 - 산출물 8종 생성: csv/json/metadata/report + unsloth_{raw,alpaca,sharegpt,chatml}.jsonl.
 
@@ -36,3 +36,4 @@
 
 ## 변경 로그
 - 2026-06-22: 문서체계 생성 → M0 결정 확정 → M1~M9 구현 및 검증 완료. pytest green.
+- 2026-06-23: 원본 qa 중복 시 검증 dedup 후 행 수가 min_rows 아래로 떨어져 FAIL되던 결함 수정. 검증 후 재증강 루프(synthetic.dedupe + 충돌 회피 augment) 추가, 회귀 테스트 1건 추가. pytest 12 passed.
