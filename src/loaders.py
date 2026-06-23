@@ -80,7 +80,15 @@ def _load_hwp(path):
 
 
 def _load_ocr(path):
+    # Tesseract로 한국어+영어 이미지에서 텍스트 추출.
+    # 바이너리 경로는 PATH 또는 TESSERACT_CMD, 언어데이터는 TESSDATA_PREFIX로 지정한다
+    # (머신별 경로를 코드에 하드코딩하지 않기 위함).
     import pytesseract
     from PIL import Image
 
+    cmd = os.environ.get("TESSERACT_CMD")
+    if cmd:
+        pytesseract.pytesseract.tesseract_cmd = cmd
+
+    # 언어데이터 위치는 TESSDATA_PREFIX 환경변수로 전달한다(서브프로세스가 상속).
     return pytesseract.image_to_string(Image.open(path), lang="kor+eng")
