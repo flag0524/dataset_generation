@@ -28,14 +28,25 @@ def run(path: str, out_dir: str = None, augment_to_min: bool = True) -> dict:
     if augment_to_min:
         datasets = synthetic.augment(datasets, config.min_rows)
 
-    # STEP4.5
+    # STEP4.5 / STEP5·6 / STEP7
     unsloth = pipeline.to_unsloth_formats(datasets)
-
-    # STEP5/6 레코드화
     records = pipeline.to_records(meta, datasets)
-
-    # STEP7 검증 루프
     validation = validate.run_validation(datasets, unsloth, records)
+
+    # 증강은 raw 행 기준이지만 크기 게이트는 중복 제거 후 기준이라, 원본에
+    # 중복쌍이 있으면 행 수가 min_rows 아래로 떨어진다. 중복을 먼저 제거한 뒤
+    # 고유 base에서 재증강하면(변형은 항상 고유) 결정적으로 min_rows를 채운다.
+    if augment_to_min:
+        for _ in range(5):
+            deduped_count = validation["row_count"] + validation["quality_filtered"]
+            if deduped_count >= config.min_rows:
+                break
+            datasets = synthetic.dedupe(datasets)
+            datasets = synthetic.augment(datasets, config.min_rows)
+            unsloth = pipeline.to_unsloth_formats(datasets)
+            records = pipeline.to_records(meta, datasets)
+            validation = validate.run_validation(datasets, unsloth, records)
+
     final_records = validation["records"]
 
     # STEP5/6/8 산출

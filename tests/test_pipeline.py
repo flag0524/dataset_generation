@@ -34,6 +34,37 @@ def test_t2_rule_schema(result):
     assert all(schemas.validate_rule(r) for r in result["rules"])  # T2-1
 
 
+def test_t2_heuristic_mode(result):
+    # 테스트 환경(conftest)에서는 LLM 차단 → 휴리스틱 경로
+    assert result["extraction_mode"] == "heuristic"
+
+
+class _StubLLM:
+    # gemma4 응답을 흉내내는 stub (네트워크 없이 LLM 파싱 경로 검증)
+    def available(self):
+        return True
+
+    def generate_json(self, prompt, system=""):
+        return {
+            "knowledge": {f: f"{f} 내용" for f in pipeline.KNOWLEDGE_FIELDS},
+            "rules": [
+                {"rule_id": "R001", "condition": "민원 접수 시", "action": "7일 내 처리", "exception": "없음"},
+                {"condition": "기한 초과 시"},  # rule_id 누락 → 정규화로 보정
+                {"action": "무효 규칙"},        # condition 없음 → 제외
+            ],
+        }
+
+
+def test_t2_llm_extraction_path():
+    meta = {"domain": "공공행정", "purpose": "민원 처리", "keywords": ["민원"], "document_name": "x"}
+    out = pipeline.extract_knowledge("민원 접수 시 7일 내 처리해야 한다.", meta, _StubLLM())
+    assert out["extraction_mode"] == "llm"
+    assert list(out["knowledge"].keys()) == pipeline.KNOWLEDGE_FIELDS
+    assert len(out["rules"]) == 2  # 무효 규칙(condition 없음) 제외
+    assert all(schemas.validate_rule(r) for r in out["rules"])
+    assert out["rules"][1]["rule_id"] == "R002"  # 누락 rule_id 자동 보정
+
+
 # T3 LLM 데이터셋
 def test_t3_dataset_schemas(result):
     ds = result["datasets"]
@@ -72,6 +103,27 @@ def test_t6_validation(result):
     assert v["quality_score"] >= 90  # T6-4 AC-06
     assert v["status"] == "PASS"
     assert v["format_consistent"] is True  # T6-5
+
+
+def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
+    # 원본 qa에 중복쌍이 있으면 중복 제거 후 행 수가 min_rows 아래로 떨어진다.
+    # 재증강 루프가 부족분을 채워 크기 게이트를 통과시키는지 검증한다 (회귀).
+    from src import runner
+
+    orig = runner.pipeline.generate_datasets
+
+    def dup_datasets(text, meta, extracted, llm):
+        ds = orig(text, meta, extracted, llm)
+        for i in range(10):  # 앞쪽 10개 qa를 동일 쌍으로 덮어써 중복 9개를 강제
+            ds["qa"][i] = dict(ds["qa"][0])
+        return ds
+
+    monkeypatch.setattr(runner.pipeline, "generate_datasets", dup_datasets)
+    v = runner.run(SAMPLE, out_dir=str(tmp_path))["validation"]
+    # 재증강 루프가 중복을 정리하고 부족분을 채워 크기 게이트를 통과해야 한다.
+    assert v["size_ok"] is True
+    assert v["row_count"] >= 100
+    assert v["status"] == "PASS"
 
 
 # T7 산출물 & 통합
