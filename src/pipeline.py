@@ -155,24 +155,30 @@ _TASKS = [
     ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
 ]
 
-_OUTPUT_PROMPTS = {
-    "explain": "다음 내용을 업무 담당자가 이해하도록 2~3문장으로 풀어서 설명하라. 원문을 그대로 반복하지 말라.\n\n내용:\n{seg}",
-    "summarize": "다음 내용을 한 문장으로 요약하라.\n\n내용:\n{seg}",
-    "rule": "다음 내용에서 '조건 → 처리' 형태의 업무 기준을 한 문장으로 도출하라.\n\n내용:\n{seg}",
-    "terms": "다음 내용의 핵심 용어 2~3개와 각 의미를 간단히 정리하라.\n\n내용:\n{seg}",
-}
-
-
-def _derive_output(kind: str, seg: str, meta: dict, expert: str, llm: LLMClient) -> str:
-    # output은 input(원문)과 다른 결과물이어야 한다. LLM 가용 시 실제 생성, 아니면 결정론적 변환.
+def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient) -> dict:
+    # 한 세그먼트의 4개 앵글 결과물을 LLM 1회 호출(JSON)로 일괄 생성한다.
+    # 세그먼트마다 4번 부르던 것을 1번으로 줄여 속도를 약 4배 개선. 실패/미가용·
+    # 빈 값은 앵글별 휴리스틱으로 폴백해 항상 input과 다른 결과물을 보장한다.
+    kinds = [k for _, k in _TASKS]
     if llm.available():
-        resp = llm.generate(
-            _OUTPUT_PROMPTS[kind].format(seg=seg),
+        data = llm.generate_json(
+            "다음 내용을 바탕으로 네 가지 결과물을 만들어라. 원문을 그대로 반복하지 말라.\n"
+            "- explain: 업무 담당자가 이해하도록 2~3문장 설명\n"
+            "- summarize: 한 문장 요약\n"
+            "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
+            "- terms: 핵심 용어 2~3개와 각 의미\n"
+            '반드시 {"explain":"","summarize":"","rule":"","terms":""} 형식의 JSON만 출력하라.\n\n'
+            f"내용:\n{seg}",
             system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
-        ).strip()
-        if len(resp) >= 15:
-            return resp
-    return _heuristic_output(kind, seg, meta, expert)
+        )
+        if isinstance(data, dict):
+            return {
+                k: (str(data.get(k, "")).strip()
+                    if len(str(data.get(k, "")).strip()) >= 15
+                    else _heuristic_output(k, seg, meta, expert))
+                for k in kinds
+            }
+    return {k: _heuristic_output(k, seg, meta, expert) for k in kinds}
 
 
 def _heuristic_output(kind: str, seg: str, meta: dict, expert: str) -> str:
@@ -210,8 +216,10 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) ->
             "metadata": {"keyword": meta["keywords"][:3]},
         })
         # instruction/QA는 segment × 과제앵글로 서로 다른 고유 행을 만든다
+        # (4개 앵글 결과물을 LLM 1회 호출로 일괄 생성)
+        outputs = _derive_outputs(seg, meta, expert, llm)
         for tmpl, kind in _TASKS:
-            output = _derive_output(kind, seg, meta, expert, llm)
+            output = outputs[kind]
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
                 "input": seg,
