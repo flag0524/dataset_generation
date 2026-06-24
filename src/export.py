@@ -66,6 +66,13 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f.write("\n".join(lines) + "\n")
 
 
+def append_history(record: dict, path: str):
+    # 실행 1건의 요약을 JSONL로 누적한다(대시보드 이력 소스). 산출물과 달리
+    # 덮어쓰지 않고 append 한다.
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
 def _dump(obj, path):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)

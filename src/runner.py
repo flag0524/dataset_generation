@@ -57,6 +57,20 @@ def run(path: str, out_dir: str = None, augment_to_min: bool = True) -> dict:
     export.write_report(meta, validation, os.path.join(out_dir, "dataset_report.md"),
                         extraction_mode=extracted.get("extraction_mode"))
 
+    # 대시보드 이력: 실행 1건 요약을 누적 (산출물과 달리 append)
+    from datetime import datetime
+    export.append_history({
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "document_name": meta["document_name"],
+        "domain": meta["domain"],
+        "expert": expert,
+        "row_count": validation["row_count"],
+        "quality_score": validation["quality_score"],
+        "status": validation["status"],
+        "extraction_mode": extracted.get("extraction_mode"),
+        "llm_mode": "ollama" if llm.available() else "mock",
+    }, os.path.join(out_dir, "history.jsonl"))
+
     return {
         "meta": meta,
         "expert": expert,

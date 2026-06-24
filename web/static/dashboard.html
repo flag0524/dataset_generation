@@ -1,0 +1,234 @@
+<!-- 데이터셋 생성 이력 대시보드: /api/history 기반 KPI·도메인 분포·실행 이력 (PRD §9 KPI 기준) -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터셋 생성 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1E40AF; --secondary: #3B82F6; --cta: #F59E0B;
+    --bg: #F1F5F9; --surface: #FFFFFF; --text: #0F172A; --muted: #475569;
+    --border: #E2E8F0; --ok: #15803D; --ok-bg: #DCFCE7; --bad: #B91C1C; --bad-bg: #FEE2E2;
+    --radius: 16px; --shadow: 0 1px 2px rgba(15,23,42,.04), 0 10px 30px rgba(15,23,42,.07);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh; color: var(--text);
+    background: radial-gradient(1200px 500px at 50% -10%, #E0E7FF 0%, rgba(224,231,255,0) 60%), var(--bg);
+    font-family: "Fira Sans", system-ui, -apple-system, sans-serif; line-height: 1.6; font-size: 16px;
+  }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 28px 20px 72px; }
+
+  /* 상단바 */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+  .brand .mk { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; background: var(--primary); }
+  .nav { display: flex; gap: 8px; }
+  .nav a {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px;
+    border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: border-color .2s, background .2s, color .2s;
+  }
+  .nav a:hover { border-color: var(--secondary); color: var(--primary); }
+  .nav a:focus-visible { outline: 2px solid var(--secondary); outline-offset: 2px; }
+  .nav a.primary { background: var(--cta); border-color: var(--cta); color: #1A1206; }
+  .nav a.primary:hover { background: #D97706; border-color: #D97706; color: #1A1206; }
+
+  h1 { font-size: 26px; font-weight: 700; margin: 26px 0 4px; letter-spacing: -.02em; }
+  .lede { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
+
+  /* KPI 카드 */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 18px 16px; box-shadow: var(--shadow); }
+  .kpi .label { font-size: 13px; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .kpi .value { font-size: 30px; font-weight: 700; letter-spacing: -.02em; margin-top: 8px; }
+  .kpi .target { font-family: "Fira Code", monospace; font-size: 11.5px; margin-top: 4px; }
+  .kpi .target.met { color: var(--ok); }
+  .kpi .target.miss { color: var(--bad); }
+  .kpi .ic { color: var(--secondary); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+  .panel h2 { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
+
+  /* 도메인 분포 막대 */
+  .bar-row { margin-bottom: 12px; }
+  .bar-row .top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .bar-row .count { font-family: "Fira Code", monospace; color: var(--muted); }
+  .bar { height: 9px; border-radius: 999px; background: #EEF2FF; overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+
+  /* 이력 테이블 */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: none; }
+  td.doc { white-space: normal; font-weight: 500; max-width: 240px; }
+  tbody tr:hover { background: #F8FAFC; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.pass { background: var(--ok-bg); color: var(--ok); }
+  .pill.fail { background: var(--bad-bg); color: var(--bad); }
+  .mono { font-family: "Fira Code", monospace; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 7px; background: #EEF2FF; color: var(--primary); font-size: 12px; font-weight: 500; }
+
+  /* 상태(빈/로딩/오류) */
+  .state { text-align: center; color: var(--muted); padding: 48px 16px; }
+  .state svg { color: var(--secondary); margin-bottom: 10px; }
+  .state .cta { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; min-height: 44px; padding: 10px 18px; border-radius: 10px; background: var(--cta); color: #1A1206; font-weight: 600; text-decoration: none; }
+
+  @media (max-width: 820px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="topbar">
+      <a class="brand" href="/static/landing.html">
+        <span class="mk" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0-1.5 3.6-3 8-3s8 1.5 8 3-3.6 3-8 3-8-1.5-8-3Z"/><path d="M4 7v10c0 1.5 3.6 3 8 3s8-1.5 8-3V7"/><path d="M4 12c0 1.5 3.6 3 8 3s8-1.5 8-3"/></svg></span>
+        데이터셋 엔진
+      </a>
+      <nav class="nav" aria-label="주 메뉴">
+        <a href="/static/landing.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          랜딩
+        </a>
+        <a class="primary" href="/">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          데이터셋 생성
+        </a>
+      </nav>
+    </div>
+
+    <h1>데이터셋 생성 대시보드</h1>
+    <p class="lede">업로드한 업무 문서로 생성·검증한 데이터셋의 이력과 품질 지표(PRD §9 KPI)를 한눈에 봅니다.</p>
+
+    <!-- KPI -->
+    <section class="kpis" id="kpis" aria-label="핵심 지표">
+      <!-- JS 렌더 -->
+    </section>
+
+    <div class="grid2">
+      <section class="panel" aria-label="도메인 분포">
+        <h2>도메인 분포</h2>
+        <div id="domains"></div>
+      </section>
+      <section class="panel" aria-label="생성 이력">
+        <h2>최근 생성 이력</h2>
+        <div class="table-wrap">
+          <table id="history-table" hidden>
+            <thead>
+              <tr>
+                <th scope="col">문서</th>
+                <th scope="col">도메인</th>
+                <th scope="col">전문가</th>
+                <th scope="col">행 수</th>
+                <th scope="col">품질</th>
+                <th scope="col">상태</th>
+                <th scope="col">추출</th>
+                <th scope="col">생성 시각</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+          <div class="state" id="state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><path d="M12 7v5l3 2"/></svg>
+            <div>불러오는 중…</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+<script>
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
+
+  function kpiCard(label, value, iconPath, target) {
+    const t = target ? `<div class="target ${target.met ? "met" : "miss"}">${target.met ? "✓" : "✗"} ${esc(target.text)}</div>` : "";
+    return `<div class="kpi">
+      <div class="label"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg></span>${esc(label)}</div>
+      <div class="value">${value}</div>${t}
+    </div>`;
+  }
+
+  function renderKpis(k) {
+    const el = document.getElementById("kpis");
+    el.innerHTML = [
+      kpiCard("총 실행", fmt(k.total_runs), '<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>'),
+      kpiCard("평균 품질 점수", k.avg_quality, '<circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/>',
+              { met: k.avg_quality >= 90, text: "목표 ≥ 90" }),
+      kpiCard("PASS 비율", k.pass_rate + "%", '<path d="M20 6 9 17l-5-5"/>',
+              { met: k.pass_rate >= 95, text: "목표 ≥ 95%" }),
+      kpiCard("총 생성 행", fmt(k.total_rows), '<path d="M3 5h18M3 12h18M3 19h18"/>'),
+    ].join("");
+  }
+
+  function renderDomains(domains) {
+    const el = document.getElementById("domains");
+    const entries = Object.entries(domains || {}).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) { el.innerHTML = '<div style="color:var(--muted);font-size:14px">데이터 없음</div>'; return; }
+    const max = Math.max(...entries.map(e => e[1]));
+    el.innerHTML = entries.map(([name, count]) => `
+      <div class="bar-row">
+        <div class="top"><span>${esc(name)}</span><span class="count">${count}건</span></div>
+        <div class="bar"><span style="width:${Math.round(count / max * 100)}%"></span></div>
+      </div>`).join("");
+  }
+
+  function renderHistory(runs) {
+    const table = document.getElementById("history-table");
+    const body = document.getElementById("history-body");
+    const state = document.getElementById("state");
+    if (!runs.length) {
+      table.hidden = true;
+      state.innerHTML = `
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6M9 17h4"/></svg>
+        <div>아직 생성 이력이 없습니다. 문서를 업로드해 첫 데이터셋을 만들어 보세요.</div>
+        <a class="cta" href="/">데이터셋 생성하기</a>`;
+      return;
+    }
+    state.style.display = "none";
+    table.hidden = false;
+    body.innerHTML = runs.map(r => {
+      const pass = r.status === "PASS";
+      const when = (r.timestamp || "").replace("T", " ");
+      return `<tr>
+        <td class="doc">${esc(r.document_name)}</td>
+        <td><span class="tag">${esc(r.domain)}</span></td>
+        <td>${esc(r.expert)}</td>
+        <td class="mono">${fmt(r.row_count)}</td>
+        <td class="mono">${esc(r.quality_score)}</td>
+        <td><span class="pill ${pass ? "pass" : "fail"}">${pass ? "PASS" : "FAIL"}</span></td>
+        <td>${esc(r.extraction_mode || "-")}</td>
+        <td class="mono">${esc(when)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function load() {
+    try {
+      const res = await fetch("/api/history");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      renderKpis(data.kpi);
+      renderDomains(data.kpi.domains);
+      renderHistory(data.runs);
+    } catch (e) {
+      document.getElementById("state").innerHTML =
+        `<div style="color:var(--bad)">이력을 불러오지 못했습니다: ${esc(e.message)}</div>`;
+    }
+  }
+  load();
+</script>
+</body>
+</html>
