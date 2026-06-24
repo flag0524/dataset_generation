@@ -1,7 +1,9 @@
 # 8단계 데이터셋 생성 파이프라인의 각 STEP 구현 (TRD §1 아키텍처)
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
+from .config import config
 from .llm import LLMClient
 
 # STEP2 도메인 → 전문가 역할 라우팅 테이블 (TRD §6)
@@ -207,7 +209,18 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) ->
     instructions, qas, rags = [], [], []
     expert = route_expert(meta["domain"])
     src = meta["document_name"]
-    for i, seg in enumerate(extracted["segments"]):
+    segs = extracted["segments"]
+
+    # 세그먼트별 LLM 호출은 I/O 대기(HTTP)라, 스레드풀로 동시에 보내 벽시계 시간을 줄인다.
+    # 결과는 인덱스 순서대로 모아 데이터셋 정렬을 유지한다.
+    seg_outputs = [None] * len(segs)
+    with ThreadPoolExecutor(max_workers=config.llm_concurrency) as ex:
+        futs = {ex.submit(_derive_outputs, seg, meta, expert, llm): i
+                for i, seg in enumerate(segs)}
+        for fut in as_completed(futs):
+            seg_outputs[futs[fut]] = fut.result()
+
+    for i, seg in enumerate(segs):
         # RAG 패시지는 원문 단위로 1건만 (중복 패시지 방지)
         rags.append({
             "id": f"DOC-{i+1:04d}",
@@ -216,8 +229,7 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) ->
             "metadata": {"keyword": meta["keywords"][:3]},
         })
         # instruction/QA는 segment × 과제앵글로 서로 다른 고유 행을 만든다
-        # (4개 앵글 결과물을 LLM 1회 호출로 일괄 생성)
-        outputs = _derive_outputs(seg, meta, expert, llm)
+        outputs = seg_outputs[i]
         for tmpl, kind in _TASKS:
             output = outputs[kind]
             instructions.append({
