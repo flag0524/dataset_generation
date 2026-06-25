@@ -86,14 +86,14 @@ def test_t4_formats(result):
 
 # T5 Export
 def test_t5_csv_columns(result):
-    path = os.path.join(result["output_dir"], "domain_dataset.csv")
+    path = os.path.join(result["output_dir"], result["artifacts"]["csv"])
     with open(path, encoding="utf-8-sig") as f:
         header = f.readline().strip().split(",")
     assert header == schemas.CSV_COLUMNS  # T5-1
 
 
 def test_t5_json_exists(result):
-    assert os.path.exists(os.path.join(result["output_dir"], "domain_dataset.json"))  # T5-2
+    assert os.path.exists(os.path.join(result["output_dir"], result["artifacts"]["json"]))  # T5-2
 
 
 # T6 검증 루프
@@ -129,7 +129,56 @@ def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
 # T7 산출물 & 통합
 def test_t7_artifacts(result):
     out = result["output_dir"]
-    for name in ["domain_dataset.csv", "domain_dataset.json",
-                 "unsloth_chatml.jsonl", "unsloth_alpaca.jsonl",
-                 "dataset_metadata.json", "dataset_report.md"]:
-        assert os.path.exists(os.path.join(out, name)), name  # T7-1/3
+    a = result["artifacts"]
+    for key in ["csv", "json", "unsloth_chatml", "unsloth_alpaca", "metadata", "report"]:
+        assert os.path.exists(os.path.join(out, a[key])), a[key]  # T7-1/3
+
+
+# S-T1 산출물 파일명이 도메인 업무명 접두를 따르는지 (solution_tests.md)
+def test_s_t1_domain_prefixed_filenames(result):
+    domain = result["meta"]["domain"]
+    a = result["artifacts"]
+    assert a["csv"].startswith(f"{domain}_"), a["csv"]
+    assert a["json"] == f"{domain}_dataset.json"
+    assert a["unsloth_alpaca"] == f"{domain}_unsloth_alpaca.jsonl"
+
+
+# S-T4 검증 게이트 임계값이 환경변수로 조정되는지 (solution_tests.md)
+def test_s_t4_gate_thresholds_env(monkeypatch):
+    import importlib
+    from src import config as cfg
+    monkeypatch.setenv("MIN_ROWS", "250")
+    monkeypatch.setenv("QUALITY_PASS_SCORE", "77")
+    importlib.reload(cfg)
+    try:
+        assert cfg.config.min_rows == 250
+        assert cfg.config.quality_pass_score == 77
+    finally:
+        monkeypatch.undo()
+        importlib.reload(cfg)  # 기본값 복원
+    assert cfg.config.min_rows == 100
+
+
+# S-T5 진행률 콜백이 단계별로 호출되는지 (solution_tests.md)
+def test_s_t5_progress_callback(tmp_path):
+    events = []
+    run(SAMPLE, out_dir=str(tmp_path), on_progress=events.append)
+    assert len(events) >= 1
+    assert events[0]["step"] == 1
+    assert events[-1]["step"] == events[-1]["total"]  # 마지막 단계까지 도달
+    assert all("stage" in e for e in events)
+
+
+# S-T6 로더 폴백: 추출 불가 입력은 명확한 메시지로 ValueError (solution_tests.md)
+def test_s_t6_loader_clear_fallback(tmp_path):
+    from src.loaders import load_document
+    # 지원하지 않는 포맷
+    f = tmp_path / "x.bin"
+    f.write_bytes(b"\x00\x01")
+    with pytest.raises(ValueError):
+        load_document(str(f))
+    # HWP 확장자지만 OLE가 아님 → 명확한 메시지
+    h = tmp_path / "doc.hwp"
+    h.write_bytes(b"not-an-ole-file")
+    with pytest.raises(ValueError, match="HWP"):
+        load_document(str(h))

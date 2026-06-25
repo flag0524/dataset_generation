@@ -29,9 +29,11 @@ def write_json(records: list, path: str):
     _dump(out, path)
 
 
-def write_unsloth(unsloth: dict, out_dir: str):
+def write_unsloth(unsloth: dict, out_dir: str, prefix: str = ""):
+    # prefix가 있으면 도메인 업무명 접두를 붙인다(예: 공공행정_unsloth_alpaca.jsonl).
+    head = f"{prefix}_" if prefix else ""
     for name, rows in unsloth.items():
-        _dump_jsonl(rows, os.path.join(out_dir, f"unsloth_{name}.jsonl"))
+        _dump_jsonl(rows, os.path.join(out_dir, f"{head}unsloth_{name}.jsonl"))
 
 
 def write_metadata(record_count: int, path: str):

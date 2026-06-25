@@ -55,6 +55,7 @@ async def generate(file: UploadFile = File(...)):
         "format_consistent": v["format_consistent"],
         "issues": v["issues"],
         "output_dir": result["output_dir"],
+        "artifacts": result["artifacts"],
     })
 
 

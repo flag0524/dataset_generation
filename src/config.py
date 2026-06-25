@@ -16,10 +16,10 @@ class Config:
     # 출력 경로
     output_dir: str = os.getenv("OUTPUT_DIR", "output")
 
-    # 검증 기준 (TRD §5, PRD §9)
-    min_rows: int = 100
-    recommended_rows: int = 1000
-    quality_pass_score: int = 90
+    # 검증 기준 (TRD §5, PRD §9) — 게이트 임계값은 env로 조정 가능(기본값 동일)
+    min_rows: int = int(os.getenv("MIN_ROWS", "100"))
+    recommended_rows: int = int(os.getenv("RECOMMENDED_ROWS", "1000"))
+    quality_pass_score: int = int(os.getenv("QUALITY_PASS_SCORE", "90"))
 
     # 채팅 템플릿 기본값 (TRD §4.8)
     chat_template: str = os.getenv("CHAT_TEMPLATE", "chatml")

@@ -64,31 +64,50 @@ def _load_xlsx(path):
 
 
 def _load_hwp(path):
-    # HWP는 best-effort. 완전 지원이 어려워 본문 스트림만 추출 시도
+    # HWP는 경량 best-effort: olefile로 미리보기 텍스트(PrvText) 스트림만 추출한다.
+    # 본문 완전 추출은 미지원(망분리·경량 정책)이며, 추출 실패 시 빈 결과 대신
+    # 한계를 명확히 알려 사용자가 대안(PDF/DOCX 변환)을 택하게 한다.
     import olefile
 
     if not olefile.isOleFile(path):
-        raise ValueError("유효한 HWP(OLE) 파일이 아님")
+        raise ValueError("유효한 HWP(OLE) 파일이 아닙니다.")
     ole = olefile.OleFileIO(path)
     try:
         if ole.exists("PrvText"):
-            data = ole.openstream("PrvText").read()
-            return data.decode("utf-16-le", errors="ignore")
+            text = ole.openstream("PrvText").read().decode("utf-16-le", errors="ignore").strip()
+            if text:
+                return text
     finally:
         ole.close()
-    return ""
+    raise ValueError(
+        "HWP 본문을 추출하지 못했습니다(미리보기 텍스트 없음). "
+        "현재 경량 로더는 PrvText 미리보기만 지원합니다. 본문이 필요하면 "
+        "문서를 PDF 또는 DOCX로 변환해 업로드하세요."
+    )
 
 
 def _load_ocr(path):
     # Tesseract로 한국어+영어 이미지에서 텍스트 추출.
     # 바이너리 경로는 PATH 또는 TESSERACT_CMD, 언어데이터는 TESSDATA_PREFIX로 지정한다
-    # (머신별 경로를 코드에 하드코딩하지 않기 위함).
-    import pytesseract
-    from PIL import Image
+    # (머신별 경로를 코드에 하드코딩하지 않기 위함). 의존성·바이너리 부재는 명확히 안내한다.
+    try:
+        import pytesseract
+        from PIL import Image
+    except ModuleNotFoundError as e:
+        raise ValueError(
+            "OCR 의존성(pytesseract/Pillow)이 설치되지 않았습니다. "
+            "오프라인 설치 패키지로 반입하세요."
+        ) from e
 
     cmd = os.environ.get("TESSERACT_CMD")
     if cmd:
         pytesseract.pytesseract.tesseract_cmd = cmd
 
     # 언어데이터 위치는 TESSDATA_PREFIX 환경변수로 전달한다(서브프로세스가 상속).
-    return pytesseract.image_to_string(Image.open(path), lang="kor+eng")
+    try:
+        return pytesseract.image_to_string(Image.open(path), lang="kor+eng")
+    except pytesseract.TesseractNotFoundError as e:
+        raise ValueError(
+            "Tesseract 실행파일을 찾을 수 없습니다. TESSERACT_CMD 환경변수로 "
+            "경로를 지정하거나 오프라인 설치하세요."
+        ) from e
