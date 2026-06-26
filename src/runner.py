@@ -1,6 +1,7 @@
 # 8단계 파이프라인을 순차 오케스트레이션하는 진입점 (TRD §1)
 import os
 import re
+import time
 
 from . import pipeline, synthetic, export, validate
 from .config import config
@@ -28,6 +29,9 @@ def run(path: str, out_dir: str = None, augment_to_min: bool = True, on_progress
     llm = LLMClient()
     document_name = os.path.basename(path)
 
+    # 실제 LLM을 쓸 때만 STEP3~4에 벽시계 예산을 건다. mock은 이미 빠르므로 무제한.
+    deadline = time.monotonic() + config.llm_time_budget if llm.available() else None
+
     total = len(_STAGES)
 
     def _emit(i):
@@ -45,11 +49,11 @@ def run(path: str, out_dir: str = None, augment_to_min: bool = True, on_progress
 
     # STEP3
     _emit(4)
-    extracted = pipeline.extract_knowledge(text, meta, llm)
+    extracted = pipeline.extract_knowledge(text, meta, llm, deadline=deadline)
 
     # STEP4
     _emit(5)
-    datasets = pipeline.generate_datasets(text, meta, extracted, llm)
+    datasets = pipeline.generate_datasets(text, meta, extracted, llm, deadline=deadline)
 
     # STEP4 보조: 분량 부족 시 합성 증강
     if augment_to_min:

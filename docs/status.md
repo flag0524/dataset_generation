@@ -39,4 +39,5 @@
 - 2026-06-23: 원본 qa 중복 시 검증 dedup 후 행 수가 min_rows 아래로 떨어져 FAIL되던 결함 수정. 검증 후 재증강 루프(synthetic.dedupe + 충돌 회피 augment) 추가, 회귀 테스트 1건 추가. pytest 12 passed.
 - 2026-06-23: STEP4 데이터셋 생성을 segment×과제앵글로 개편해 input(원문)과 output(결과물)이 겹치지 않게 함. RAG 패시지는 원문 단위 1건으로 분리(dedupe도 rag 비정렬 처리). OCR 로더의 Tesseract 경로를 환경변수(TESSERACT_CMD/TESSDATA_PREFIX)로 설정 가능하게 함. pytest 12 passed.
 - 2026-06-23: 작은/저품질 문서를 min_rows까지 무리하게 부풀려 같은 내용이 반복되던 문제 완화. 합성 행을 원본의 최대 MAX_SYNTHETIC_MULT(5)배까지만 생성하고(부족하면 그 선에서 정지), 증강 변형을 '(변형 N)' 번호 대신 재진술 틀(_VARIANT_STYLES)로 다양화. pytest 12 passed.
+- 2026-06-26: 실제 Ollama 사용 시 문서 크기에 비례해 응답이 수 분까지 늘어나던 문제 해결. STEP3~4 LLM 작업에 벽시계 예산(LLM_TIME_BUDGET, 기본 25초)을 도입해, 예산 초과·임박 세그먼트는 휴리스틱으로 즉시 폴백하고 호출 타임아웃도 남은 예산으로 제한. 산출물 행 수·구조는 불변(증강이 min_rows 충족). 시간 예산 회귀 테스트 1건 추가. pytest 17 passed.
 - 2026-06-25: 핵심 파이프라인 완료 이후 웹 UI·솔루션 레이어 확장. 데이터셋 히스토리 대시보드(백엔드+UI) 추가, Unsloth 분석 매뉴얼·솔루션 제안서 문서화, 솔루션 문서 시스템 + 공공부문 MVP(도메인명 산출물·게이트·진행률·로더), 도메인명 다운로드 링크 + 다크 네이비/라임 테마 적용.

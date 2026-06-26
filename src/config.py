@@ -10,6 +10,9 @@ class Config:
     ollama_model: str = os.getenv("OLLAMA_MODEL", "gemma4:31b-cloud")
     # STEP4 세그먼트별 LLM 호출 동시 실행 수 (I/O 대기 단축용)
     llm_concurrency: int = int(os.getenv("LLM_CONCURRENCY", "5"))
+    # STEP3~4 LLM 작업 전체 벽시계 예산(초). 초과·임박분은 휴리스틱으로 폴백해
+    # 문서 크기와 무관하게 응답 시간을 유계로 만든다(기본 25초 → 30초 SLA 여유).
+    llm_time_budget: float = float(os.getenv("LLM_TIME_BUDGET", "25"))
     # Ollama 미가용 시 결정론적 mock 모드로 동작 (테스트 가능성 확보)
     use_mock_llm: bool = os.getenv("USE_MOCK_LLM", "auto") != "false"
 

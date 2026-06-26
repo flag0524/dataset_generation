@@ -44,7 +44,7 @@ class _StubLLM:
     def available(self):
         return True
 
-    def generate_json(self, prompt, system=""):
+    def generate_json(self, prompt, system="", timeout=None):
         return {
             "knowledge": {f: f"{f} 내용" for f in pipeline.KNOWLEDGE_FIELDS},
             "rules": [
@@ -112,8 +112,8 @@ def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
 
     orig = runner.pipeline.generate_datasets
 
-    def dup_datasets(text, meta, extracted, llm):
-        ds = orig(text, meta, extracted, llm)
+    def dup_datasets(text, meta, extracted, llm, deadline=None):
+        ds = orig(text, meta, extracted, llm, deadline=deadline)
         for i in range(10):  # 앞쪽 10개 qa를 동일 쌍으로 덮어써 중복 9개를 강제
             ds["qa"][i] = dict(ds["qa"][0])
         return ds
@@ -124,6 +124,41 @@ def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
     assert v["size_ok"] is True
     assert v["row_count"] >= 100
     assert v["status"] == "PASS"
+
+
+# 응답 시간 게이트: 느린 LLM이라도 시간 예산이 벽시계를 유계로 만든다 (회귀)
+def test_s_t4_time_budget_bounds_wallclock():
+    import time
+
+    class _SlowLLM:
+        def __init__(self):
+            self.calls = 0
+
+        def available(self):
+            return True
+
+        def generate_json(self, prompt, system="", timeout=None):
+            self.calls += 1
+            time.sleep(0.4)  # 느린 호출 모사
+            return {"explain": "x" * 20, "summarize": "y" * 20,
+                    "rule": "z" * 20, "terms": "w" * 20}
+
+    segs = [f"세그먼트 내용 번호 {i} 입니다." for i in range(40)]
+    extracted = {"segments": segs}
+    meta = {"domain": "일반", "document_name": "x", "keywords": ["민원"]}
+    slow = _SlowLLM()
+
+    # 예산 없이 40개를 동시성 5로 돌리면 8배치 × 0.4초 = 약 3.2초.
+    # 1초 예산이면 첫 배치만 LLM 처리되고 나머지는 휴리스틱으로 폴백해야 한다.
+    deadline = time.monotonic() + 1.0
+    t0 = time.monotonic()
+    ds = pipeline.generate_datasets("", meta, extracted, slow, deadline=deadline)
+    elapsed = time.monotonic() - t0
+
+    assert elapsed < 2.5  # 예산이 동작하면 8배치를 다 돌지 않는다
+    assert slow.calls < len(segs)  # 일부 세그먼트는 LLM 호출 없이 폴백
+    assert len(ds["instruction"]) == len(segs) * len(pipeline._TASKS)  # 행 수는 그대로
+    assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
 # T7 산출물 & 통합

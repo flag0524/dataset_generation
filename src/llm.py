@@ -23,8 +23,8 @@ class LLMClient:
             self._available = False
         return self._available
 
-    def generate(self, prompt: str, system: str = "") -> str:
-        # 실제 Ollama 호출, 실패 시 mock 응답
+    def generate(self, prompt: str, system: str = "", timeout: float = None) -> str:
+        # 실제 Ollama 호출, 실패 시 mock 응답. timeout 미지정 시 기본 120초.
         if self.available():
             try:
                 import requests
@@ -37,16 +37,16 @@ class LLMClient:
                         "system": system,
                         "stream": False,
                     },
-                    timeout=120,
+                    timeout=timeout or 120,
                 )
                 return r.json().get("response", "")
             except Exception:
                 pass
         return self._mock(prompt, system)
 
-    def generate_json(self, prompt: str, system: str = "") -> dict:
+    def generate_json(self, prompt: str, system: str = "", timeout: float = None) -> dict:
         # JSON 응답을 파싱. 실패 시 본문에서 첫 JSON 블록 추출
-        raw = self.generate(prompt + "\n\nJSON으로만 응답하라.", system)
+        raw = self.generate(prompt + "\n\nJSON으로만 응답하라.", system, timeout=timeout)
         return _extract_json(raw)
 
     def _mock(self, prompt: str, system: str) -> str:
