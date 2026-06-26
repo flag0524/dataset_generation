@@ -189,6 +189,14 @@ def test_s_t6_sniff_detects_real_format(tmp_path):
     z.write_bytes(b"PK\x03\x04junk")
     assert "ZIP" in _sniff_format(str(z))
 
+    html = tmp_path / "h.bin"
+    html.write_bytes(b"<html><body><table><tr><td>1</td></tr></table></body></html>")
+    assert "HTML" in _sniff_format(str(html))
+
+    txt = tmp_path / "t.bin"
+    txt.write_bytes("이름,부서\n홍길동,총무과\n".encode("utf-8"))
+    assert "텍스트" in _sniff_format(str(txt)) or "CSV" in _sniff_format(str(txt))
+
 
 # T7 산출물 & 통합
 def test_t7_artifacts(result):

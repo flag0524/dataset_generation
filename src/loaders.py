@@ -4,9 +4,8 @@ from zipfile import BadZipFile
 
 # DOCX/XLSX/PPTX는 모두 ZIP 컨테이너라, 구형 바이너리(.doc/.xls/.ppt)나 손상 파일이면
 # 파서가 BadZipFile을 던진다. 영문 예외 대신 실제 감지 포맷을 담아 안내한다.
-_ZIP_FORMAT_HINT = (
-    "유효한 {fmt} 파일이 아닙니다. {detected} 최신 포맷이나 PDF로 변환해 업로드하세요."
-)
+_ZIP_FORMAT_HINT = "유효한 {fmt} 파일이 아닙니다. {detected}"
+_CONVERT_HINT = "최신 포맷이나 PDF로 변환해 업로드하세요."
 
 
 def _sniff_format(path: str) -> str:
@@ -14,16 +13,32 @@ def _sniff_format(path: str) -> str:
     # 새 의존성 없이 기존 olefile만 사용한다. 진단/오류 메시지 보강용.
     try:
         with open(path, "rb") as f:
-            head = f.read(8)
+            head = f.read(512)
     except OSError:
         return "파일을 읽을 수 없습니다."
     if head[:4] == b"PK\x03\x04":
-        return "ZIP 컨테이너이지만 내부 구조가 손상된 것으로 보입니다."
+        return f"ZIP 컨테이너이지만 내부 구조가 손상된 것으로 보입니다. {_CONVERT_HINT}"
     if head[:4] == b"%PDF":
         return "실제로는 PDF 파일입니다. 확장자를 .pdf로 바꿔 업로드하세요."
     if head[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":  # OLE 복합 문서
-        return f"구형 OLE 바이너리({_ole_subtype(path)})로 보입니다."
-    return "알 수 없는 형식이거나 손상된 파일입니다."
+        return f"구형 OLE 바이너리({_ole_subtype(path)})로 보입니다. {_CONVERT_HINT}"
+
+    # 텍스트 계열 — 공공·기업 시스템이 보고서를 HTML/XML/CSV로 내보내며
+    # 확장자만 .xls/.xlsx로 붙이는 경우가 흔하다. BOM은 제거 후 판별한다.
+    sample = head.lstrip(b"\xef\xbb\xbf").lstrip()
+    low = sample[:256].lower()
+    if low.startswith(b"<?xml") and b"spreadsheet" in low:
+        return "실제로는 Excel 2003 XML(SpreadsheetML) 파일입니다. 한글/오피스에서 .xlsx로 다시 저장해 업로드하세요."
+    if low.startswith(b"<?xml"):
+        return f"실제로는 XML 텍스트 파일입니다. {_CONVERT_HINT}"
+    if low.startswith((b"<!doctype html", b"<html", b"<table")) or b"<table" in low:
+        return "실제로는 HTML 표 파일입니다(시스템이 .xls로 내보낸 형식). 한글/오피스에서 .xlsx로 다시 저장하거나 CSV로 변환해 업로드하세요."
+    try:
+        head.decode("utf-8")
+        return "실제로는 일반 텍스트/CSV로 보입니다. 확장자를 .txt 또는 .csv로 바꿔 업로드하세요."
+    except UnicodeDecodeError:
+        pass
+    return f"알 수 없는 형식이거나 손상된 파일입니다(첫 바이트: {head[:8].hex(' ')}). {_CONVERT_HINT}"
 
 
 def _ole_subtype(path: str) -> str:
