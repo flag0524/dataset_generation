@@ -161,6 +161,18 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 로더: ZIP 컨테이너 포맷(.docx/.xlsx/.pptx)에 비-ZIP 바이트가 오면
+# 영문 BadZipFile 대신 깨끗한 한국어 ValueError로 변환한다 (회귀)
+@pytest.mark.parametrize("ext", [".docx", ".xlsx", ".pptx"])
+def test_s_t6_loader_badzip_to_valueerror(tmp_path, ext):
+    from src.loaders import load_document
+
+    f = tmp_path / f"bad{ext}"
+    f.write_bytes(b"\xd0\xcf\x11\xe0not a zip at all")  # 구형 OLE 매직 모사
+    with pytest.raises(ValueError, match="유효한"):
+        load_document(str(f))
+
+
 # T7 산출물 & 통합
 def test_t7_artifacts(result):
     out = result["output_dir"]

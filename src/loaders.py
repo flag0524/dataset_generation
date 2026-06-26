@@ -1,5 +1,13 @@
 # 다중 포맷 문서를 평문 텍스트로 변환하는 로더 (TRD §3)
 import os
+from zipfile import BadZipFile
+
+# DOCX/XLSX/PPTX는 모두 ZIP 컨테이너라, 구형 바이너리(.doc/.xls/.ppt)나 손상 파일이면
+# 파서가 BadZipFile을 던진다. 영문 예외 대신 일관된 한국어 안내로 변환한다.
+_ZIP_FORMAT_HINT = (
+    "유효한 {fmt} 파일이 아닙니다. 구형 .{old} 또는 손상된 파일일 수 있습니다. "
+    "최신 포맷이나 PDF로 변환해 업로드하세요."
+)
 
 
 def load_document(path: str) -> str:
@@ -35,15 +43,24 @@ def _load_pdf(path):
 
 def _load_docx(path):
     import docx
+    from docx.opc.exceptions import PackageNotFoundError
 
-    d = docx.Document(path)
+    # 비-ZIP/구형 .doc는 BadZipFile 또는 PackageNotFoundError로 나타난다.
+    try:
+        d = docx.Document(path)
+    except (BadZipFile, PackageNotFoundError) as e:
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="DOCX", old="doc")) from e
     return "\n".join(p.text for p in d.paragraphs)
 
 
 def _load_pptx(path):
     from pptx import Presentation
+    from pptx.exc import PackageNotFoundError
 
-    prs = Presentation(path)
+    try:
+        prs = Presentation(path)
+    except (BadZipFile, PackageNotFoundError) as e:
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="PPTX", old="ppt")) from e
     out = []
     for slide in prs.slides:
         for shape in slide.shapes:
@@ -55,7 +72,10 @@ def _load_pptx(path):
 def _load_xlsx(path):
     from openpyxl import load_workbook
 
-    wb = load_workbook(path, read_only=True, data_only=True)
+    try:
+        wb = load_workbook(path, read_only=True, data_only=True)
+    except BadZipFile as e:
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="XLSX", old="xls")) from e
     out = []
     for ws in wb.worksheets:
         for row in ws.iter_rows(values_only=True):
