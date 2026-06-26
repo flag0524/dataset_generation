@@ -19,6 +19,13 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def index():
+    # 루트는 랜딩페이지를 제공한다(데이터셋 생성 도구는 /generate).
+    with open(os.path.join(STATIC_DIR, "landing.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read(), headers={"Cache-Control": "no-store"})
+
+
+@app.get("/generate", response_class=HTMLResponse)
+def generate_page():
     with open(os.path.join(STATIC_DIR, "index.html"), encoding="utf-8") as f:
         return f.read()
 

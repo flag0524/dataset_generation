@@ -42,6 +42,16 @@
   }
   .wrap { width: 100%; max-width: 760px; padding: 56px 20px 72px; }
 
+  .topnav { display: flex; gap: 8px; margin-bottom: 22px; }
+  .topnav a {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13.5px; font-weight: 600; color: var(--muted);
+    border: 1px solid var(--border); background: var(--surface);
+    padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    transition: border-color .18s, color .18s, background .18s;
+  }
+  .topnav a:hover { border-color: var(--secondary); color: var(--text); background: rgba(52,224,200,.07); }
+
   header { text-align: center; margin-bottom: 28px; }
   .badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -131,6 +141,13 @@
 </head>
 <body>
   <main class="wrap">
+    <nav class="topnav" aria-label="페이지 이동">
+      <a href="/">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        메인으로
+      </a>
+      <a href="/static/dashboard.html">대시보드</a>
+    </nav>
     <header>
       <span class="badge">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>

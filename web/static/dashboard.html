@@ -96,16 +96,16 @@
   <div class="wrap">
 
     <div class="topbar">
-      <a class="brand" href="/static/landing.html">
+      <a class="brand" href="/">
         <span class="mk" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B1A14" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0-1.5 3.6-3 8-3s8 1.5 8 3-3.6 3-8 3-8-1.5-8-3Z"/><path d="M4 7v10c0 1.5 3.6 3 8 3s8-1.5 8-3V7"/><path d="M4 12c0 1.5 3.6 3 8 3s8-1.5 8-3"/></svg></span>
         데이터셋 엔진
       </a>
       <nav class="nav" aria-label="주 메뉴">
-        <a href="/static/landing.html">
+        <a href="/">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
           랜딩
         </a>
-        <a class="primary" href="/">
+        <a class="primary" href="/generate">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           데이터셋 생성
         </a>
@@ -198,7 +198,7 @@
       state.innerHTML = `
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/><path d="M9 13h6M9 17h4"/></svg>
         <div>아직 생성 이력이 없습니다. 문서를 업로드해 첫 데이터셋을 만들어 보세요.</div>
-        <a class="cta" href="/">데이터셋 생성하기</a>`;
+        <a class="cta" href="/generate">데이터셋 생성하기</a>`;
       return;
     }
     state.style.display = "none";

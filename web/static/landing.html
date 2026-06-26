@@ -1,4 +1,4 @@
-<!-- 데이터셋 엔진 랜딩페이지 (다크 네이비 + 네온 라임 · 와이어프레임 지구본 히어로) -->
+<!-- 데이터셋 엔진 랜딩페이지 (샘플 레이아웃: 헥사곤 회로 + AI 칩 히어로 · 다크 네이비/라임 테마) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -56,47 +56,59 @@
   .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
   a.btn:focus-visible,.nav-links a:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
 
-  /* hero */
-  .hero{flex:1;display:grid;grid-template-columns:.95fr 1.05fr;align-items:center;gap:40px;padding:40px 0 72px;position:relative}
-  .globe-col{position:relative;min-height:440px}
-  .globe{position:absolute;left:-90px;top:50%;transform:translateY(-50%);width:560px;height:560px;max-width:none}
-  .globe .ring{transform-origin:center}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .globe .rot{animation:spin 60s linear infinite;transform-origin:280px 280px}
+  /* hero — 샘플 구도: 상단 라벨 → 거대한 네온 타이틀 → 중앙 AI 칩/회로 → 설명 카드 → CTA 알약 */
+  .hero{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:18px 0 40px;position:relative;overflow:hidden}
+  /* 배경 헥사곤 회로 모티프 */
+  .hex-bg{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5}
+  .hero > *:not(.hex-bg){position:relative;z-index:1}
 
-  .copy{max-width:560px}
   .eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:500;color:var(--cyan);background:rgba(52,224,200,.08);border:1px solid rgba(52,224,200,.25);padding:6px 13px;border-radius:999px}
   .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px rgba(52,224,200,.18)}
-  h1{font-weight:900;font-size:52px;line-height:1.08;letter-spacing:-.02em;margin:24px 0 0;color:var(--lime);white-space:nowrap}
-  h1 .w{color:var(--text)}
-  .lede{color:var(--dim);font-size:16.5px;margin:22px 0 0;max-width:38em}
-  .hero-cta{display:flex;align-items:center;gap:18px;margin-top:34px;flex-wrap:wrap}
+
+  h1{font-weight:900;font-size:44px;line-height:1.12;letter-spacing:-.02em;margin:14px 0 0;color:var(--lime);
+     text-shadow:0 0 22px rgba(199,242,78,.35),0 0 2px rgba(199,242,78,.6)}
+  h1 .w{color:var(--text);text-shadow:none}
+  .lede{color:var(--dim);font-size:17px;margin:16px auto 0;max-width:30em}
+
+  /* AI 칩 비주얼 */
+  .chip-col{margin:20px 0 0;position:relative;width:230px;height:230px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+  .chip .rot{animation:spin 48s linear infinite;transform-origin:140px 140px}
+  .chip .pulse{animation:pulse 2.6s ease-in-out infinite}
+
+  .hero-cta{display:flex;align-items:center;gap:18px;margin-top:24px;flex-wrap:wrap;justify-content:center}
+  .btn-xl{font-size:16px;padding:15px 28px;border-radius:999px}
   .text-cta{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--lime);border-bottom:2px solid var(--lime);padding-bottom:3px;transition:color .18s,border-color .18s}
   .text-cta:hover{color:var(--lime-600);border-color:var(--lime-600)}
   .text-cta:focus-visible{outline:2px solid var(--lime);outline-offset:4px}
 
-  .meta{display:flex;gap:26px;margin-top:46px;flex-wrap:wrap}
-  .meta .m b{display:block;font-weight:900;font-size:26px;color:var(--text);letter-spacing:-.01em}
+  /* 지표 + 기능 카드 */
+  .meta{display:flex;gap:34px;margin-top:32px;flex-wrap:wrap;justify-content:center}
+  .meta .m b{display:block;font-weight:900;font-size:28px;color:var(--text);letter-spacing:-.01em}
   .meta .m b .u{color:var(--lime);font-size:18px;margin-left:2px}
   .meta .m span{color:var(--dim-2);font-size:13px;font-weight:500}
+
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px;width:100%;text-align:left}
+  .feat{background:var(--navy-2);border:1px solid var(--navy-line);border-radius:var(--r);padding:22px}
+  .feat .fi{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(52,224,200,.10);border:1px solid rgba(52,224,200,.25);color:var(--cyan);margin-bottom:14px}
+  .feat h3{margin:0 0 7px;font-size:16px;font-weight:800}
+  .feat p{margin:0;color:var(--dim);font-size:14px;line-height:1.55}
 
   footer{padding:22px 0;border-top:1px solid var(--navy-line)}
   .foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--dim-2);font-size:13px}
 
   @media (max-width:920px){
-    .hero{grid-template-columns:1fr;gap:8px;padding-top:24px;text-align:left}
-    .globe-col{min-height:280px;order:2;margin-top:24px}
-    .globe{position:relative;left:50%;top:auto;transform:translateX(-50%);width:360px;height:360px}
-    .copy{order:1}
-    h1{font-size:46px}
+    h1{font-size:38px}
+    .features{grid-template-columns:1fr}
   }
   @media (max-width:560px){
     .nav-links a{padding:9px 11px}
-    h1{font-size:29px}
-    .globe{width:280px;height:280px}
-    .meta{gap:18px}
+    h1{font-size:30px}
+    .chip-col{width:220px;height:220px}
+    .meta{gap:22px}
   }
-  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}.globe .rot{animation:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}.chip .rot{animation:none}.chip .pulse{animation:none}}
 </style>
 </head>
 <body>
@@ -104,16 +116,16 @@
   <!-- NAV -->
   <div class="nav-outer" id="navbar">
     <nav class="nav wrap" aria-label="주 메뉴">
-      <a class="logo" href="/static/landing.html">
+      <a class="logo" href="/">
         <span class="mk" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0B1A14" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0-1.5 3.6-3 8-3s8 1.5 8 3-3.6 3-8 3-8-1.5-8-3Z"/><path d="M4 7v10c0 1.5 3.6 3 8 3s8-1.5 8-3V7"/><path d="M4 12c0 1.5 3.6 3 8 3s8-1.5 8-3"/></svg></span>
         데이터셋 엔진
       </a>
       <div class="nav-links">
         <a href="/static/dashboard.html">대시보드</a>
-        <a href="/">데이터셋 생성</a>
+        <a href="/generate">데이터셋 생성</a>
       </div>
       <div class="nav-cta">
-        <a class="btn btn-lime" href="/static/dashboard.html">대시보드 보기
+        <a class="btn btn-lime" href="/generate">데이터셋 생성
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
       </div>
@@ -122,58 +134,94 @@
 
   <!-- HERO -->
   <header class="wrap hero">
-    <!-- 와이어프레임 지구본 -->
-    <div class="globe-col" aria-hidden="true">
-      <svg class="globe" viewBox="0 0 560 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- 배경 헥사곤 회로 -->
+    <svg class="hex-bg" viewBox="0 0 1180 620" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="hexg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#34E0C8" stop-opacity=".5"/>
+          <stop offset="1" stop-color="#C7F24E" stop-opacity=".3"/>
+        </linearGradient>
+      </defs>
+      <g stroke="url(#hexg)" stroke-width="1.1" fill="none" opacity=".5">
+        <polygon points="120,60 168,88 168,144 120,172 72,144 72,88"/>
+        <polygon points="1040,70 1088,98 1088,154 1040,182 992,154 992,98"/>
+        <polygon points="980,420 1028,448 1028,504 980,532 932,504 932,448"/>
+        <polygon points="150,470 198,498 198,554 150,582 102,554 102,498"/>
+        <path d="M168,116 L300,116 M992,126 L860,126 M932,476 L800,476 M198,526 L330,526"/>
+        <circle cx="300" cy="116" r="3.5" fill="#34E0C8" stroke="none"/>
+        <circle cx="860" cy="126" r="3.5" fill="#C7F24E" stroke="none"/>
+        <circle cx="800" cy="476" r="3.5" fill="#34E0C8" stroke="none"/>
+        <circle cx="330" cy="526" r="3.5" fill="#C7F24E" stroke="none"/>
+      </g>
+    </svg>
+
+    <span class="eyebrow"><span class="dot"></span>DOMAIN DATASET ENGINE · 로컬 추론</span>
+    <h1>더 똑똑한 AI를 위한<br><span class="w">업무 데이터 자동화</span></h1>
+    <p class="lede">PDF·HWP·엑셀에 잠든 업무 지식을 도메인 전문가 AI가 구조화하고, Unsloth 학습용 데이터셋까지 자동으로 만들어 검증합니다.</p>
+
+    <!-- AI 칩 비주얼 -->
+    <div class="chip-col" aria-hidden="true">
+      <svg class="chip" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="gWire" x1="40" y1="60" x2="500" y2="500" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#34E0C8"/>
-            <stop offset="1" stop-color="#C7F24E"/>
+          <linearGradient id="cw" x1="40" y1="40" x2="240" y2="240" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#34E0C8"/><stop offset="1" stop-color="#C7F24E"/>
           </linearGradient>
-          <radialGradient id="gGlow" cx="0.42" cy="0.4" r="0.62">
-            <stop stop-color="#34E0C8" stop-opacity="0.22"/>
-            <stop offset="1" stop-color="#34E0C8" stop-opacity="0"/>
+          <radialGradient id="cg" cx="0.5" cy="0.5" r="0.5">
+            <stop stop-color="#34E0C8" stop-opacity="0.28"/><stop offset="1" stop-color="#34E0C8" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <circle cx="280" cy="280" r="250" fill="url(#gGlow)"/>
-        <g class="rot" stroke="url(#gWire)" stroke-width="1.1" opacity="0.92">
-          <circle cx="280" cy="280" r="218" stroke-width="1.4"/>
-          <!-- 경선 (세로 타원) -->
-          <ellipse cx="280" cy="280" rx="55" ry="218"/>
-          <ellipse cx="280" cy="280" rx="125" ry="218"/>
-          <ellipse cx="280" cy="280" rx="185" ry="218"/>
-          <line x1="280" y1="62" x2="280" y2="498"/>
-          <!-- 위선 (가로 타원) -->
-          <ellipse cx="280" cy="280" rx="218" ry="48"/>
-          <ellipse cx="280" cy="280" rx="218" ry="118"/>
-          <ellipse cx="280" cy="280" rx="218" ry="178"/>
-          <line x1="62" y1="280" x2="498" y2="280"/>
+        <circle cx="140" cy="140" r="130" fill="url(#cg)"/>
+        <g class="rot" stroke="url(#cw)" stroke-width="1.1" opacity="0.85">
+          <circle cx="140" cy="140" r="118" stroke-dasharray="6 10"/>
+          <circle cx="140" cy="140" r="92"/>
         </g>
-        <!-- 노드 점 -->
+        <!-- 칩 본체 -->
+        <rect x="98" y="98" width="84" height="84" rx="14" fill="#16263F" stroke="url(#cw)" stroke-width="1.6"/>
+        <rect x="116" y="116" width="48" height="48" rx="8" fill="none" stroke="var(--cyan)" stroke-width="1.4" class="pulse"/>
+        <text x="140" y="148" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="20" font-weight="600" fill="#C7F24E">AI</text>
+        <!-- 핀 -->
+        <g stroke="url(#cw)" stroke-width="2.2" stroke-linecap="round">
+          <path d="M112 98 V78 M140 98 V74 M168 98 V78"/>
+          <path d="M112 182 V202 M140 182 V206 M168 182 V202"/>
+          <path d="M98 112 H78 M98 140 H74 M98 168 H78"/>
+          <path d="M182 112 H202 M182 140 H206 M182 168 H202"/>
+        </g>
         <g fill="#C7F24E">
-          <circle cx="158" cy="190" r="3.5"/>
-          <circle cx="372" cy="150" r="3"/>
-          <circle cx="420" cy="330" r="3.5"/>
-          <circle cx="210" cy="400" r="3"/>
+          <circle cx="140" cy="70" r="3"/><circle cx="210" cy="140" r="3"/><circle cx="140" cy="210" r="3"/><circle cx="70" cy="140" r="3"/>
         </g>
       </svg>
     </div>
 
-    <!-- 카피 -->
-    <div class="copy">
-      <span class="eyebrow"><span class="dot"></span>DOMAIN DATASET ENGINE · 로컬 추론</span>
-      <h1>업무 문서를 <span class="w">학습 데이터</span>로.</h1>
-      <p class="lede">PDF·HWP·엑셀에 잠든 업무 지식을 도메인 전문가 AI가 구조화하고, Unsloth 학습용 데이터셋까지 자동으로 만들어 검증합니다.</p>
-      <div class="hero-cta">
-        <a class="btn btn-lime" href="/static/dashboard.html">대시보드 보기
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </a>
-        <a class="text-cta" href="/">데이터셋 생성하기</a>
+    <div class="hero-cta">
+      <a class="btn btn-lime btn-xl" href="/generate">데이터셋 생성하기
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="text-cta" href="/static/dashboard.html">대시보드 보기</a>
+    </div>
+
+    <div class="meta">
+      <div class="m"><b>8<span class="u">종</span></b><span>지원 입력 포맷</span></div>
+      <div class="m"><b>4<span class="u">종</span></b><span>Unsloth 학습 포맷</span></div>
+      <div class="m"><b>PASS</b><span>자동 품질 검증</span></div>
+    </div>
+
+    <!-- 기능 카드 -->
+    <div class="features">
+      <div class="feat">
+        <span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></span>
+        <h3>문서 이해 · 구조화</h3>
+        <p>PDF·HWP·엑셀 등 업무 문서를 도메인 전문가 Agent가 분석해 지식·규칙·프로세스로 구조화합니다.</p>
       </div>
-      <div class="meta">
-        <div class="m"><b>8<span class="u">종</span></b><span>지원 입력 포맷</span></div>
-        <div class="m"><b>4<span class="u">종</span></b><span>Unsloth 학습 포맷</span></div>
-        <div class="m"><b>PASS</b><span>자동 품질 검증</span></div>
+      <div class="feat">
+        <span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <h3>학습 데이터 자동 생성</h3>
+        <p>Instruction·Q&A·RAG 형태와 Unsloth 4종 포맷(raw·alpaca·sharegpt·chatml)을 한 번에 만들어 냅니다.</p>
+      </div>
+      <div class="feat">
+        <span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 5-3.5 7.5-8.5 9C7.5 19.5 4 17 4 12V6l8-3 8 3z"/></svg></span>
+        <h3>품질 자동 검증</h3>
+        <p>원문 근거 확인·중복 제거·구조 검증을 거쳐 학습 적합성을 점수화하고 PASS/FAIL을 판정합니다.</p>
       </div>
     </div>
   </header>
