@@ -3,11 +3,51 @@ import os
 from zipfile import BadZipFile
 
 # DOCX/XLSX/PPTX는 모두 ZIP 컨테이너라, 구형 바이너리(.doc/.xls/.ppt)나 손상 파일이면
-# 파서가 BadZipFile을 던진다. 영문 예외 대신 일관된 한국어 안내로 변환한다.
+# 파서가 BadZipFile을 던진다. 영문 예외 대신 실제 감지 포맷을 담아 안내한다.
 _ZIP_FORMAT_HINT = (
-    "유효한 {fmt} 파일이 아닙니다. 구형 .{old} 또는 손상된 파일일 수 있습니다. "
-    "최신 포맷이나 PDF로 변환해 업로드하세요."
+    "유효한 {fmt} 파일이 아닙니다. {detected} 최신 포맷이나 PDF로 변환해 업로드하세요."
 )
+
+
+def _sniff_format(path: str) -> str:
+    # 파일 첫 바이트와 OLE 내부 스트림으로 실제 포맷을 추정해 한국어 한 문장으로 돌려준다.
+    # 새 의존성 없이 기존 olefile만 사용한다. 진단/오류 메시지 보강용.
+    try:
+        with open(path, "rb") as f:
+            head = f.read(8)
+    except OSError:
+        return "파일을 읽을 수 없습니다."
+    if head[:4] == b"PK\x03\x04":
+        return "ZIP 컨테이너이지만 내부 구조가 손상된 것으로 보입니다."
+    if head[:4] == b"%PDF":
+        return "실제로는 PDF 파일입니다. 확장자를 .pdf로 바꿔 업로드하세요."
+    if head[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":  # OLE 복합 문서
+        return f"구형 OLE 바이너리({_ole_subtype(path)})로 보입니다."
+    return "알 수 없는 형식이거나 손상된 파일입니다."
+
+
+def _ole_subtype(path: str) -> str:
+    # OLE 복합 문서의 내부 스트림 이름으로 구형 오피스/HWP 종류를 구분한다.
+    try:
+        import olefile
+
+        ole = olefile.OleFileIO(path)
+        try:
+            names = {e[0] if isinstance(e, list) else e for e in ole.listdir()}
+            names |= {n.lstrip("\x05") for n in names}
+        finally:
+            ole.close()
+    except Exception:
+        return "구형 오피스/HWP"
+    if {"Workbook", "Book"} & names:
+        return "구형 Excel .xls"
+    if "WordDocument" in names:
+        return "구형 Word .doc"
+    if "PowerPoint Document" in names:
+        return "구형 PowerPoint .ppt"
+    if {"FileHeader", "HwpSummaryInformation", "BodyText"} & names:
+        return "한글 HWP"
+    return "구형 오피스/HWP"
 
 
 def load_document(path: str) -> str:
@@ -49,7 +89,7 @@ def _load_docx(path):
     try:
         d = docx.Document(path)
     except (BadZipFile, PackageNotFoundError) as e:
-        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="DOCX", old="doc")) from e
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="DOCX", detected=_sniff_format(path))) from e
     return "\n".join(p.text for p in d.paragraphs)
 
 
@@ -60,7 +100,7 @@ def _load_pptx(path):
     try:
         prs = Presentation(path)
     except (BadZipFile, PackageNotFoundError) as e:
-        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="PPTX", old="ppt")) from e
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="PPTX", detected=_sniff_format(path))) from e
     out = []
     for slide in prs.slides:
         for shape in slide.shapes:
@@ -75,7 +115,7 @@ def _load_xlsx(path):
     try:
         wb = load_workbook(path, read_only=True, data_only=True)
     except BadZipFile as e:
-        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="XLSX", old="xls")) from e
+        raise ValueError(_ZIP_FORMAT_HINT.format(fmt="XLSX", detected=_sniff_format(path))) from e
     out = []
     for ws in wb.worksheets:
         for row in ws.iter_rows(values_only=True):

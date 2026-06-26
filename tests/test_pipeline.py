@@ -173,6 +173,23 @@ def test_s_t6_loader_badzip_to_valueerror(tmp_path, ext):
         load_document(str(f))
 
 
+# 로더: 실제 포맷 감지 메시지가 오류에 포함된다 (정체 확인)
+def test_s_t6_sniff_detects_real_format(tmp_path):
+    from src.loaders import _sniff_format
+
+    pdf = tmp_path / "x.bin"
+    pdf.write_bytes(b"%PDF-1.4 ...")
+    assert "PDF" in _sniff_format(str(pdf))
+
+    ole = tmp_path / "y.bin"
+    ole.write_bytes(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1rest")
+    assert "OLE" in _sniff_format(str(ole))
+
+    z = tmp_path / "z.bin"
+    z.write_bytes(b"PK\x03\x04junk")
+    assert "ZIP" in _sniff_format(str(z))
+
+
 # T7 산출물 & 통합
 def test_t7_artifacts(result):
     out = result["output_dir"]
