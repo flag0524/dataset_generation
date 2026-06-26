@@ -19,6 +19,13 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def index():
+    # 루트는 랜딩페이지를 제공한다(데이터셋 생성 도구는 /generate).
+    with open(os.path.join(STATIC_DIR, "landing.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read(), headers={"Cache-Control": "no-store"})
+
+
+@app.get("/generate", response_class=HTMLResponse)
+def generate_page():
     with open(os.path.join(STATIC_DIR, "index.html"), encoding="utf-8") as f:
         return f.read()
 
@@ -55,7 +62,42 @@ async def generate(file: UploadFile = File(...)):
         "format_consistent": v["format_consistent"],
         "issues": v["issues"],
         "output_dir": result["output_dir"],
+        "artifacts": result["artifacts"],
     })
+
+
+@app.get("/api/history")
+def history():
+    # 생성 이력(history.jsonl)을 최신순으로 반환하고 PRD KPI를 집계한다.
+    import json
+    path = os.path.join(config.output_dir, "history.jsonl")
+    runs = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        runs.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+    runs.reverse()  # 최신 먼저
+
+    total = len(runs)
+    pass_count = sum(1 for r in runs if r.get("status") == "PASS")
+    scores = [r.get("quality_score", 0) for r in runs]
+    domains = {}
+    for r in runs:
+        d = r.get("domain", "기타")
+        domains[d] = domains.get(d, 0) + 1
+    kpi = {
+        "total_runs": total,
+        "avg_quality": round(sum(scores) / total, 1) if total else 0,
+        "pass_rate": round(pass_count / total * 100, 1) if total else 0,
+        "total_rows": sum(r.get("row_count", 0) for r in runs),
+        "domains": domains,
+    }
+    return JSONResponse({"kpi": kpi, "runs": runs})
 
 
 @app.get("/api/download/{name}")

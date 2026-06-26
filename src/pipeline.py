@@ -1,7 +1,10 @@
 # 8단계 데이터셋 생성 파이프라인의 각 STEP 구현 (TRD §1 아키텍처)
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
+from .config import config
 from .llm import LLMClient
 
 # STEP2 도메인 → 전문가 역할 라우팅 테이블 (TRD §6)
@@ -17,6 +20,20 @@ DOMAIN_KEYWORDS = {
     "법률": ["법률", "조항", "판례", "계약", "소송", "법령"],
     "금융": ["금융", "대출", "예금", "투자", "이자", "계좌"],
 }
+
+
+def _budget_timeout(deadline):
+    # LLM 호출에 쓸 타임아웃을 deadline(monotonic 기준)으로 결정한다.
+    # 반환 (use_llm, timeout):
+    #   deadline 없음        → (True, None)   예산 제한 없음, 기본 타임아웃
+    #   남은 시간 > 1초      → (True, 남은초)  남은 예산만큼만 기다림
+    #   임박/초과(≤1초)      → (False, None)  LLM 건너뛰고 휴리스틱 폴백
+    if deadline is None:
+        return True, None
+    remaining = deadline - time.monotonic()
+    if remaining > 1:
+        return True, remaining
+    return False, None
 
 
 def _segments(text: str):
@@ -71,10 +88,10 @@ def route_expert(domain: str) -> str:
 KNOWLEDGE_FIELDS = ["업무정의", "업무목적", "처리절차", "담당조직", "입력데이터", "처리규칙", "결과데이터"]
 
 
-def extract_knowledge(text: str, meta: dict, llm: LLMClient) -> dict:
+def extract_knowledge(text: str, meta: dict, llm: LLMClient, deadline=None) -> dict:
     # gemma4 LLM 우선, 실패/미가용 시 휴리스틱 폴백
     segs = _segments(text)
-    result = _llm_extract(text, meta, llm)
+    result = _llm_extract(text, meta, llm, deadline)
     if result is None:
         result = _heuristic_extract(segs, meta)
         result["extraction_mode"] = "heuristic"
@@ -84,8 +101,11 @@ def extract_knowledge(text: str, meta: dict, llm: LLMClient) -> dict:
     return result
 
 
-def _llm_extract(text: str, meta: dict, llm: LLMClient):
+def _llm_extract(text: str, meta: dict, llm: LLMClient, deadline=None):
     if not llm.available():
+        return None
+    use_llm, timeout = _budget_timeout(deadline)
+    if not use_llm:
         return None
     expert = route_expert(meta["domain"])
     system = f"너는 {expert}이자 AI 데이터 엔지니어다. 문서에서 업무 지식과 규칙을 구조화한다."
@@ -97,7 +117,7 @@ def _llm_extract(text: str, meta: dict, llm: LLMClient):
         f'{{"knowledge": {{...}}, "rules": [{{"rule_id":"R001","condition":"","action":"","exception":""}}]}}\n\n'
         f"[문서]\n{text[:6000]}"
     )
-    data = llm.generate_json(prompt, system)
+    data = llm.generate_json(prompt, system, timeout=timeout)
     rules = _normalize_rules(data.get("rules"))
     knowledge = data.get("knowledge")
     # LLM 응답이 규칙·지식 중 하나라도 유효해야 채택, 아니면 폴백
@@ -155,24 +175,32 @@ _TASKS = [
     ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
 ]
 
-_OUTPUT_PROMPTS = {
-    "explain": "다음 내용을 업무 담당자가 이해하도록 2~3문장으로 풀어서 설명하라. 원문을 그대로 반복하지 말라.\n\n내용:\n{seg}",
-    "summarize": "다음 내용을 한 문장으로 요약하라.\n\n내용:\n{seg}",
-    "rule": "다음 내용에서 '조건 → 처리' 형태의 업무 기준을 한 문장으로 도출하라.\n\n내용:\n{seg}",
-    "terms": "다음 내용의 핵심 용어 2~3개와 각 의미를 간단히 정리하라.\n\n내용:\n{seg}",
-}
-
-
-def _derive_output(kind: str, seg: str, meta: dict, expert: str, llm: LLMClient) -> str:
-    # output은 input(원문)과 다른 결과물이어야 한다. LLM 가용 시 실제 생성, 아니면 결정론적 변환.
-    if llm.available():
-        resp = llm.generate(
-            _OUTPUT_PROMPTS[kind].format(seg=seg),
+def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=None) -> dict:
+    # 한 세그먼트의 4개 앵글 결과물을 LLM 1회 호출(JSON)로 일괄 생성한다.
+    # 세그먼트마다 4번 부르던 것을 1번으로 줄여 속도를 약 4배 개선. 실패/미가용·
+    # 빈 값·예산 초과는 앵글별 휴리스틱으로 폴백해 항상 input과 다른 결과물을 보장한다.
+    kinds = [k for _, k in _TASKS]
+    use_llm, timeout = _budget_timeout(deadline)
+    if use_llm and llm.available():
+        data = llm.generate_json(
+            "다음 내용을 바탕으로 네 가지 결과물을 만들어라. 원문을 그대로 반복하지 말라.\n"
+            "- explain: 업무 담당자가 이해하도록 2~3문장 설명\n"
+            "- summarize: 한 문장 요약\n"
+            "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
+            "- terms: 핵심 용어 2~3개와 각 의미\n"
+            '반드시 {"explain":"","summarize":"","rule":"","terms":""} 형식의 JSON만 출력하라.\n\n'
+            f"내용:\n{seg}",
             system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
-        ).strip()
-        if len(resp) >= 15:
-            return resp
-    return _heuristic_output(kind, seg, meta, expert)
+            timeout=timeout,
+        )
+        if isinstance(data, dict):
+            return {
+                k: (str(data.get(k, "")).strip()
+                    if len(str(data.get(k, "")).strip()) >= 15
+                    else _heuristic_output(k, seg, meta, expert))
+                for k in kinds
+            }
+    return {k: _heuristic_output(k, seg, meta, expert) for k in kinds}
 
 
 def _heuristic_output(kind: str, seg: str, meta: dict, expert: str) -> str:
@@ -197,11 +225,23 @@ def _derive_question(kind: str, seg: str) -> str:
     }[kind]
 
 
-def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) -> dict:
+def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, deadline=None) -> dict:
     instructions, qas, rags = [], [], []
     expert = route_expert(meta["domain"])
     src = meta["document_name"]
-    for i, seg in enumerate(extracted["segments"]):
+    segs = extracted["segments"]
+
+    # 세그먼트별 LLM 호출은 I/O 대기(HTTP)라, 스레드풀로 동시에 보내 벽시계 시간을 줄인다.
+    # 결과는 인덱스 순서대로 모아 데이터셋 정렬을 유지한다. deadline이 지나면 아직
+    # 시작 안 한 작업은 _derive_outputs 안에서 휴리스틱으로 즉시 폴백한다.
+    seg_outputs = [None] * len(segs)
+    with ThreadPoolExecutor(max_workers=config.llm_concurrency) as ex:
+        futs = {ex.submit(_derive_outputs, seg, meta, expert, llm, deadline): i
+                for i, seg in enumerate(segs)}
+        for fut in as_completed(futs):
+            seg_outputs[futs[fut]] = fut.result()
+
+    for i, seg in enumerate(segs):
         # RAG 패시지는 원문 단위로 1건만 (중복 패시지 방지)
         rags.append({
             "id": f"DOC-{i+1:04d}",
@@ -210,8 +250,9 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient) ->
             "metadata": {"keyword": meta["keywords"][:3]},
         })
         # instruction/QA는 segment × 과제앵글로 서로 다른 고유 행을 만든다
+        outputs = seg_outputs[i]
         for tmpl, kind in _TASKS:
-            output = _derive_output(kind, seg, meta, expert, llm)
+            output = outputs[kind]
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
                 "input": seg,

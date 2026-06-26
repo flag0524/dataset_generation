@@ -29,9 +29,11 @@ def write_json(records: list, path: str):
     _dump(out, path)
 
 
-def write_unsloth(unsloth: dict, out_dir: str):
+def write_unsloth(unsloth: dict, out_dir: str, prefix: str = ""):
+    # prefix가 있으면 도메인 업무명 접두를 붙인다(예: 공공행정_unsloth_alpaca.jsonl).
+    head = f"{prefix}_" if prefix else ""
     for name, rows in unsloth.items():
-        _dump_jsonl(rows, os.path.join(out_dir, f"unsloth_{name}.jsonl"))
+        _dump_jsonl(rows, os.path.join(out_dir, f"{head}unsloth_{name}.jsonl"))
 
 
 def write_metadata(record_count: int, path: str):
@@ -64,6 +66,13 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         lines += ["", "## 이슈"] + [f"- {i}" for i in validation["issues"]]
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+
+
+def append_history(record: dict, path: str):
+    # 실행 1건의 요약을 JSONL로 누적한다(대시보드 이력 소스). 산출물과 달리
+    # 덮어쓰지 않고 append 한다.
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def _dump(obj, path):
