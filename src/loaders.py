@@ -33,11 +33,14 @@ def _sniff_format(path: str) -> str:
         return f"실제로는 XML 텍스트 파일입니다. {_CONVERT_HINT}"
     if low.startswith((b"<!doctype html", b"<html", b"<table")) or b"<table" in low:
         return "실제로는 HTML 표 파일입니다(시스템이 .xls로 내보낸 형식). 한글/오피스에서 .xlsx로 다시 저장하거나 CSV로 변환해 업로드하세요."
+    text_msg = "실제로는 일반 텍스트/CSV로 보입니다. 확장자를 .txt 또는 .csv로 바꿔 업로드하세요."
     try:
         head.decode("utf-8")
-        return "실제로는 일반 텍스트/CSV로 보입니다. 확장자를 .txt 또는 .csv로 바꿔 업로드하세요."
-    except UnicodeDecodeError:
-        pass
+        return text_msg
+    except UnicodeDecodeError as ude:
+        # 512바이트 경계에서 멀티바이트 문자가 잘렸을 뿐이면 여전히 텍스트로 본다.
+        if ude.start >= len(head) - 4:
+            return text_msg
     return f"알 수 없는 형식이거나 손상된 파일입니다(첫 바이트: {head[:8].hex(' ')}). {_CONVERT_HINT}"
 
 

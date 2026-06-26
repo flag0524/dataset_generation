@@ -197,6 +197,11 @@ def test_s_t6_sniff_detects_real_format(tmp_path):
     txt.write_bytes("이름,부서\n홍길동,총무과\n".encode("utf-8"))
     assert "텍스트" in _sniff_format(str(txt)) or "CSV" in _sniff_format(str(txt))
 
+    # 512바이트 경계에서 한글이 잘려도 텍스트로 판별돼야 한다(오탐 회귀)
+    boundary = tmp_path / "b.bin"
+    boundary.write_bytes(("가" * 200).encode("utf-8")[:512])  # 끝에서 멀티바이트가 잘림
+    assert "텍스트" in _sniff_format(str(boundary)) or "CSV" in _sniff_format(str(boundary))
+
 
 # T7 산출물 & 통합
 def test_t7_artifacts(result):
