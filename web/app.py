@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -12,6 +12,10 @@ from src.runner import run
 from src.config import config
 
 app = FastAPI(title="도메인 특화 데이터셋 생성 시스템")
+
+# '빠른 미리보기' 모드에서 STEP3~4 LLM 작업에 거는 벽시계 예산(초). 이 모드 산출물은
+# 초과 청크가 드롭된 미완성본이며 학습용이 아니다. 기본(preview=False)은 무제한 생성.
+PREVIEW_BUDGET_S = 25
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -31,7 +35,7 @@ def generate_page():
 
 
 @app.post("/api/generate")
-async def generate(file: UploadFile = File(...)):
+async def generate(file: UploadFile = File(...), preview: bool = Form(False)):
     suffix = os.path.splitext(file.filename)[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
@@ -40,7 +44,8 @@ async def generate(file: UploadFile = File(...)):
     named = os.path.join(os.path.dirname(tmp_path), file.filename)
     os.replace(tmp_path, named)
     try:
-        result = run(named)
+        # preview=True면 시간 예산을 걸어 빠르게 훑는다(미완성·학습용 아님). 기본은 무제한.
+        result = run(named, time_budget=PREVIEW_BUDGET_S if preview else None)
     except (ValueError, ModuleNotFoundError) as e:
         # 지원하지 않는 포맷·파서 의존성 누락 등은 사용자에게 보이는 오류로 반환
         return JSONResponse({"error": f"문서를 처리할 수 없습니다: {e}"}, status_code=400)
@@ -63,6 +68,7 @@ async def generate(file: UploadFile = File(...)):
         "issues": v["issues"],
         "output_dir": result["output_dir"],
         "artifacts": result["artifacts"],
+        "preview": preview,  # True면 미완성 미리보기(학습용 아님)
     })
 
 

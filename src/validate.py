@@ -27,18 +27,19 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
     if not format_ok:
         issues.append("ChatML/ShareGPT 역할 태깅 교대 불일치")
 
-    # 4) 크기 기준
+    # 4) 크기 기준 — 합성 패딩을 제거했으므로 소스가 작으면 행 수가 적을 수 있다.
+    #    크기 미달은 PASS를 막는 하드 게이트가 아니라 경고로 둔다(해법은 소스 확대).
     row_count = len(deduped)
     size_ok = row_count >= config.min_rows
     if not size_ok:
-        issues.append(f"행 수 {row_count} < 최소 {config.min_rows}")
+        issues.append(f"경고: 행 수 {row_count} < 권장 최소 {config.min_rows} (소스 문서 확대 권장)")
 
     # 5) LLM Judge (자체 휴리스틱 채점) — 빈 답변·과단문 감점
     judged = [r for r in deduped if len(r["answer"]) >= 8]
     quality_filtered = len(deduped) - len(judged)
 
-    quality_score = _score(judged, format_ok, size_ok)
-    status = "PASS" if quality_score >= config.quality_pass_score and size_ok else "FAIL"
+    quality_score = _score(judged, format_ok)
+    status = "PASS" if quality_score >= config.quality_pass_score else "FAIL"
 
     return {
         "quality_score": quality_score,
@@ -65,14 +66,14 @@ def _check_roles(unsloth: dict) -> bool:
     return True
 
 
-def _score(rows, format_ok, size_ok) -> int:
+def _score(rows, format_ok) -> int:
+    # 품질 점수는 형식 일관성과 답변 충실도로만 매긴다. 행 수(크기)는 경고 대상이지
+    # 품질 점수 감점 요소가 아니다(소스가 작아도 내용이 좋으면 고품질).
     if not rows:
         return 0
     base = 100
     if not format_ok:
         base -= 30
-    if not size_ok:
-        base -= 15
     # 너무 짧은 답변 비율 감점
     short = sum(1 for r in rows if len(r["answer"]) < 15)
     base -= int(10 * short / len(rows))
