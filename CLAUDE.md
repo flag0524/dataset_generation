@@ -32,7 +32,6 @@ uvicorn web.app:app --reload                                       # 웹 UI :800
 - `src/runner.py` — 8단계 오케스트레이션 진입점. 새 단계는 여기서 연결한다.
 - `src/pipeline.py` — STEP1~4.5 (분석/라우팅/추출/생성/Unsloth 변환). 도메인 라우팅·분류 테이블 포함.
 - `src/validate.py` — STEP7 검증 루프(Validator·LLM Judge·크기/구조 게이트).
-- `src/synthetic.py` — 분량 부족 시 합성 증강(min_rows 충족).
 - `src/export.py` — CSV/JSON/Unsloth jsonl/리포트/메타데이터 직렬화.
 - `src/loaders.py` — 포맷별 문서 로더. `src/schemas.py` — 단계 간 계약 검증. `src/llm.py` — Ollama+mock.
 - `src/config.py` — 전역 설정·환경 변수 로딩(`Config` 데이터클래스). 게이트 임계값·LLM 설정의 단일 진입점.
