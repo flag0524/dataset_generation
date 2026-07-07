@@ -55,13 +55,14 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
 
 
 def _check_roles(unsloth: dict) -> bool:
+    # 대화형 포맷은 system=지시, user=원문, assistant=출력의 3턴이다(보고서 2-2 대응).
     for c in unsloth.get("chatml", []):
         roles = [m["role"] for m in c["messages"]]
-        if roles != ["user", "assistant"]:
+        if roles != ["system", "user", "assistant"]:
             return False
     for c in unsloth.get("sharegpt", []):
         froms = [m["from"] for m in c["conversations"]]
-        if froms != ["human", "gpt"]:
+        if froms != ["system", "human", "gpt"]:
             return False
     return True
 

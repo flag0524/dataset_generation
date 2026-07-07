@@ -42,12 +42,16 @@ _NOISE_PATTERNS = [
     re.compile(r"^\d+\s*$"),                  # 페이지 번호만
     re.compile(r"^[-\s]*\d+[-\s]*$"),         # - 12 - 형태 페이지 번호
 ]
-_MIN_SEG_LEN = 15  # 문장 조각·목차 잔재를 걸러내는 최소 길이
+# 신구조문 대비표 파편 — '(현행과 같음)', '<신 설>', '<삭 제>' 같은 조각은 문맥이 없어
+# 환각성 output을 만든다(보고서 2-4). 이런 마커가 있으면 저품질 청크로 본다.
+_AMENDMENT_NOISE = re.compile(r"현행과\s*같음|<\s*신\s*설\s*>|<\s*삭\s*제\s*>|신구조문")
 
 
 def _is_noise(s: str) -> bool:
-    # 목차 점선·페이지번호 등 학습 가치 없는 청크인지 판별한다.
+    # 목차 점선·페이지번호·신구조문 대비표 파편 등 학습 가치 없는 청크인지 판별한다.
     if any(p.match(s) for p in _NOISE_PATTERNS):
+        return True
+    if _AMENDMENT_NOISE.search(s):
         return True
     # 점선(dot leader)이 대부분을 차지하는 목차 항목 (예: "제안경위 ·········· 3")
     dots = sum(s.count(c) for c in ".·․…‥∙⋯")
@@ -57,7 +61,7 @@ def _is_noise(s: str) -> bool:
 def _segments(text: str):
     # 문서를 의미 있는 문장 청크로 분해한다. PDF 추출 텍스트는 문장 중간에서 줄바꿈되므로,
     # 먼저 문단 내 줄바꿈을 공백으로 이어 붙여 문장이 중간에서 잘리지 않게 한 뒤,
-    # 문장 경계(마침표·물음표 등)로만 분할한다. 목차 점선·페이지번호는 걸러낸다.
+    # 문장 경계(마침표·물음표 등)로만 분할한다. 목차·대비표 파편·초단문은 걸러낸다.
     parts = re.split(r"\n\s*\n", text)
     segs = []
     for p in parts:
@@ -67,7 +71,7 @@ def _segments(text: str):
             continue
         for s in re.split(r"(?<=[.!?。])\s+", joined):
             s = s.strip(" -*#\t·")
-            if len(s) >= _MIN_SEG_LEN and not _is_noise(s):
+            if len(s) >= config.min_seg_len and not _is_noise(s):
                 segs.append(s)
     return segs
 
@@ -238,60 +242,69 @@ _TASKS = [
     ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
 ]
 
+# 앵글별 LLM 질문 생성 실패 시 쓰는 일반 질문(원문 절단이 아니라 안전한 고정 문구).
+_GENERIC_Q = {
+    "explain": "이 내용을 업무 담당자가 이해하도록 설명해 주세요.",
+    "summarize": "이 내용의 핵심을 요약하면 무엇인가요?",
+    "rule": "이 내용에 적용되는 업무 처리 기준은 무엇인가요?",
+    "terms": "이 내용의 핵심 용어와 의미는 무엇인가요?",
+}
+
+
 def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=None) -> dict:
-    # 한 세그먼트의 4개 앵글 결과물을 만들어 유효한 것만 dict로 돌려준다.
-    # - 실제 LLM 가용: 1회 호출(JSON) 후 15자 이상인 앵글만 채택. 예산 소진·빈 응답·
-    #   저품질 앵글은 폴백 없이 드롭한다(가짜 템플릿이 학습 데이터를 오염하지 않게).
-    # - LLM 미가용(mock/테스트): 결정론적 구조 출력으로 파이프라인 end-to-end 보장.
-    #   이 출력은 학습용이 아니며 llm_mode=mock으로 표시된다.
+    # 한 세그먼트에서 앵글별 (질문 q, 답변 a)과 청크 키워드를 LLM 1회 호출로 얻는다.
+    # 반환: {"angles": {kind: {"q":.., "a":..}}, "keywords": [..]} — a가 15자 이상인
+    # 앵글만 채택. 질문·키워드도 LLM이 생성하므로 원문 절단·문서단위 복사 문제가 없다.
+    # - 예산 소진/빈 응답: 폴백 없이 빈 결과(청크 드롭).
+    # - LLM 미가용(mock/테스트): 결정론적 구조 출력으로 end-to-end 보장(학습용 아님).
     kinds = [k for _, k in _TASKS]
     if not llm.available():
-        return {k: _mock_output(k, seg, meta, expert) for k in kinds}
+        return _mock_derive(seg, meta, expert)
     use_llm, timeout = _budget_timeout(deadline)
     if not use_llm:
-        return {}  # 예산 소진 → 이 청크는 드롭
+        return {}
     data = llm.generate_json(
-        "다음 내용을 바탕으로 네 가지 결과물을 만들어라. 원문을 그대로 반복하지 말라.\n"
+        "다음 내용을 바탕으로 네 가지 과제의 질문(q)과 답변(a)을 만들어라. 원문을 그대로 반복하지 말라.\n"
+        "질문(q)은 원문을 자르지 말고 완결된 자연스러운 한국어 의문문으로 작성하라.\n"
         "- explain: 업무 담당자가 이해하도록 2~3문장 설명\n"
         "- summarize: 한 문장 요약\n"
         "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
         "- terms: 핵심 용어 2~3개와 각 의미\n"
-        '반드시 {"explain":"","summarize":"","rule":"","terms":""} 형식의 JSON만 출력하라.\n\n'
+        "- keywords: 이 내용의 핵심 키워드 2~3개(명사) 배열\n"
+        '반드시 JSON만 출력하라: {"explain":{"q":"","a":""},"summarize":{"q":"","a":""},'
+        '"rule":{"q":"","a":""},"terms":{"q":"","a":""},"keywords":["",""]}\n\n'
         f"내용:\n{seg}",
         system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
         timeout=timeout,
     )
     if not isinstance(data, dict):
         return {}
-    out = {}
+    angles = {}
     for k in kinds:
-        v = str(data.get(k, "")).strip()
-        if len(v) >= 15:  # 유효 앵글만 채택, 나머지는 드롭
-            out[k] = v
-    return out
+        item = data.get(k) or {}
+        if not isinstance(item, dict):
+            continue
+        a = str(item.get("a", "")).strip()
+        if len(a) < 15:  # 유효 답변이 있는 앵글만 채택
+            continue
+        q = str(item.get("q", "")).strip() or _GENERIC_Q[k]
+        angles[k] = {"q": q, "a": a}
+    kws = [str(w).strip() for w in (data.get("keywords") or []) if str(w).strip()]
+    return {"angles": angles, "keywords": kws[:3]}
 
 
-def _mock_output(kind: str, seg: str, meta: dict, expert: str) -> str:
+def _mock_derive(seg: str, meta: dict, expert: str) -> dict:
     # LLM 미가용(mock/테스트) 전용 결정론적 출력. 실제 LLM 경로에서는 호출되지 않으며
     # 학습용 데이터가 아니다(파이프라인 end-to-end 구동·구조 검증 목적).
     kw = ", ".join(meta["keywords"][:3]) or "핵심 사항"
-    if kind == "summarize":
-        return f"[mock] 요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다."
-    if kind == "rule":
-        return f"[mock] 처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다."
-    if kind == "terms":
-        return f"[mock] 핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다."
-    return f"[mock] {expert}의 관점에서 보면 이 내용은 다음을 뜻한다 — {seg}."
-
-
-def _derive_question(kind: str, seg: str) -> str:
-    head = seg[:30]
-    return {
-        "explain": f"{head}의 내용을 설명해 줄 수 있나요?",
-        "summarize": f"{head}을(를) 요약하면 무엇인가요?",
-        "rule": f"{head}에 적용되는 처리 기준은 무엇인가요?",
-        "terms": f"{head}의 핵심 용어는 무엇인가요?",
-    }[kind]
+    a = {
+        "explain": f"[mock] {expert}의 관점에서 보면 이 내용은 다음을 뜻한다 — {seg}.",
+        "summarize": f"[mock] 요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다.",
+        "rule": f"[mock] 처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다.",
+        "terms": f"[mock] 핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다.",
+    }
+    angles = {k: {"q": _GENERIC_Q[k], "a": v} for k, v in a.items()}
+    return {"angles": angles, "keywords": _top_keywords(seg, n=3)}
 
 
 def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, deadline=None) -> dict:
@@ -311,25 +324,30 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
             seg_outputs[futs[fut]] = fut.result()
 
     for i, seg in enumerate(segs):
+        res = seg_outputs[i] or {}
+        angles = res.get("angles", {})
+        # 청크 키워드는 레코드별로 부여한다(문서 단위 복사 지양). 없으면 문서 키워드로 폴백.
+        chunk_kw = res.get("keywords") or meta["keywords"][:3]
         # RAG 패시지는 원문 자체(생성물 아님)라 항상 유지한다.
         rags.append({
             "id": f"DOC-{i+1:04d}",
             "title": seg[:30],
             "content": seg,
-            "metadata": {"keyword": meta["keywords"][:3]},
+            "metadata": {"keyword": chunk_kw},
         })
         # instruction/QA는 LLM이 실제로 만든 앵글만 레코드로 만든다(못 만든 앵글은 드롭).
-        outputs = seg_outputs[i] or {}
+        # 질문(q)도 LLM 생성이라 원문 절단 문제가 없다.
         for tmpl, kind in _TASKS:
-            output = outputs.get(kind)
-            if not output:
+            item = angles.get(kind)
+            if not item:
                 continue
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
                 "input": seg,
-                "output": output,
+                "output": item["a"],
+                "keyword": chunk_kw,
             })
-            qas.append({"question": _derive_question(kind, seg), "answer": output, "source": src})
+            qas.append({"question": item["q"], "answer": item["a"], "source": src, "keyword": chunk_kw})
     return {"instruction": instructions, "qa": qas, "rag": rags}
 
 
@@ -341,19 +359,23 @@ def to_unsloth_formats(datasets: dict) -> dict:
         {"instruction": d["instruction"], "input": d["input"], "output": d["output"]}
         for d in datasets["instruction"]
     ]
+    # 대화형 포맷은 instruction 삼중항을 3턴으로 옮긴다(보고서 2-2): system=지시,
+    # user=원문(input), assistant=출력. user 턴에 원문 근거가 실려 문서기반 학습이 된다.
     sharegpt = [
         {"conversations": [
-            {"from": "human", "value": d["question"]},
-            {"from": "gpt", "value": d["answer"]},
+            {"from": "system", "value": d["instruction"]},
+            {"from": "human", "value": d["input"]},
+            {"from": "gpt", "value": d["output"]},
         ]}
-        for d in datasets["qa"]
+        for d in datasets["instruction"]
     ]
     chatml = [
         {"messages": [
-            {"role": "user", "content": d["question"]},
-            {"role": "assistant", "content": d["answer"]},
+            {"role": "system", "content": d["instruction"]},
+            {"role": "user", "content": d["input"]},
+            {"role": "assistant", "content": d["output"]},
         ]}
-        for d in datasets["qa"]
+        for d in datasets["instruction"]
     ]
     return {"raw": raw, "alpaca": alpaca, "sharegpt": sharegpt, "chatml": chatml}
 
@@ -373,7 +395,7 @@ def to_records(meta: dict, datasets: dict) -> list:
             "input": inst["input"],
             "output": inst["output"],
             "source_document": meta["document_name"],
-            "keyword": meta["keywords"][:3],
+            "keyword": inst.get("keyword", meta["keywords"][:3]),  # 레코드(청크) 단위 키워드
             "created_date": today,
         })
     return records

@@ -79,10 +79,35 @@ def test_t4_formats(result):
     assert all("text" in r for r in u["raw"])  # T4-1
     # Unsloth/HF 표준에 맞춰 alpaca 키는 소문자
     assert all(set(r) == {"instruction", "input", "output"} for r in u["alpaca"])
+    # 대화형 포맷은 3턴: system=지시, user=원문, assistant=출력 (보고서 2-2 대응)
     for c in u["sharegpt"]:  # T4-2
-        assert [m["from"] for m in c["conversations"]] == ["human", "gpt"]
+        assert [m["from"] for m in c["conversations"]] == ["system", "human", "gpt"]
     for c in u["chatml"]:  # T4-3
-        assert [m["role"] for m in c["messages"]] == ["user", "assistant"]
+        assert [m["role"] for m in c["messages"]] == ["system", "user", "assistant"]
+
+
+# 2-2: 대화형 user 턴에 원문(input)이 실려야 한다(잘린 질문 암기 방지)
+def test_s_chat_user_turn_carries_source(result):
+    u = result["unsloth"]
+    inputs = {d["input"] for d in result["datasets"]["instruction"]}
+    for c in u["chatml"]:
+        assert c["messages"][1]["content"] in inputs  # user 턴 == 원문 청크
+    for c in u["sharegpt"]:
+        assert c["conversations"][1]["value"] in inputs
+
+
+# 2-1: question은 원문 절단 접미 템플릿이 아니어야 한다(괄호미닫힘·조사노출 없음)
+def test_s_question_not_truncated(result):
+    for qa in result["datasets"]["qa"]:
+        q = qa["question"]
+        assert "을(를)" not in q  # 조사 미처리 노출 금지
+        assert q.count("(") == q.count(")")  # 괄호 균형(문장 중간 절단 방지)
+
+
+# 2-3: keyword가 문서 단위로 전 레코드에 동일 복사되면 안 된다(레코드 단위)
+def test_s_keyword_per_record(result):
+    recs = result["datasets"]["instruction"]
+    assert all("keyword" in r for r in recs)
 
 
 # T5 Export
@@ -127,8 +152,8 @@ def test_s_t4_time_budget_bounds_wallclock():
         def generate_json(self, prompt, system="", timeout=None):
             self.calls += 1
             time.sleep(0.4)  # 느린 호출 모사
-            return {"explain": "x" * 20, "summarize": "y" * 20,
-                    "rule": "z" * 20, "terms": "w" * 20}
+            return {k: {"q": f"{k} 질문?", "a": f"{k} 답변 " + "가" * 20}
+                    for k in ("explain", "summarize", "rule", "terms")} | {"keywords": ["민원"]}
 
     segs = [f"세그먼트 내용 번호 {i} 입니다." for i in range(40)]
     extracted = {"segments": segs}

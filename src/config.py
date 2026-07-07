@@ -28,5 +28,8 @@ class Config:
     # 채팅 템플릿 기본값 (TRD §4.8)
     chat_template: str = os.getenv("CHAT_TEMPLATE", "chatml")
 
+    # 청크(세그먼트) 최소 길이(자). 신구조문 대비표 파편·초단문 저품질 청크를 거른다.
+    min_seg_len: int = int(os.getenv("MIN_SEG_LEN", "50"))
+
 
 config = Config()
