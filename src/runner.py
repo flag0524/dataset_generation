@@ -68,9 +68,11 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
     # Unsloth JSONL은 정제 후 최종 레코드에서 생성해 JSON/CSV와 건수·내용을 일치시킨다
     # (과거엔 정제 전 datasets에서 생성돼 미정제본이 학습에 쓰이는 문제가 있었다).
     clean_datasets = {
-        "instruction": [{"instruction": r["instruction"], "input": r["input"], "output": r["output"]}
+        "instruction": [{"instruction": r["instruction"], "input": r["input"],
+                         "output": r["output"], "keyword": r["keyword"]}
                         for r in final_records],
-        "qa": [{"question": r["question"], "answer": r["answer"], "source": r["source_document"]}
+        "qa": [{"question": r["question"], "answer": r["answer"],
+                "source": r["source_document"], "keyword": r["keyword"]}
                for r in final_records],
         "rag": datasets["rag"],
     }
