@@ -36,17 +36,38 @@ def _budget_timeout(deadline):
     return False, None
 
 
+# 목차 점선(dot leader)·페이지번호·구분선 등 비의미 청크를 걸러내는 패턴.
+_NOISE_PATTERNS = [
+    re.compile(r"^[\s.·․…‥∙⋯\-—_=]+$"),   # 점선/구분선만 있는 줄
+    re.compile(r"^\d+\s*$"),                  # 페이지 번호만
+    re.compile(r"^[-\s]*\d+[-\s]*$"),         # - 12 - 형태 페이지 번호
+]
+_MIN_SEG_LEN = 15  # 문장 조각·목차 잔재를 걸러내는 최소 길이
+
+
+def _is_noise(s: str) -> bool:
+    # 목차 점선·페이지번호 등 학습 가치 없는 청크인지 판별한다.
+    if any(p.match(s) for p in _NOISE_PATTERNS):
+        return True
+    # 점선(dot leader)이 대부분을 차지하는 목차 항목 (예: "제안경위 ·········· 3")
+    dots = sum(s.count(c) for c in ".·․…‥∙⋯")
+    return dots >= 6 and dots >= len(s) * 0.3
+
+
 def _segments(text: str):
-    # 문단/문장 단위로 텍스트를 의미 청크로 분해
+    # 문서를 의미 있는 문장 청크로 분해한다. PDF 추출 텍스트는 문장 중간에서 줄바꿈되므로,
+    # 먼저 문단 내 줄바꿈을 공백으로 이어 붙여 문장이 중간에서 잘리지 않게 한 뒤,
+    # 문장 경계(마침표·물음표 등)로만 분할한다. 목차 점선·페이지번호는 걸러낸다.
     parts = re.split(r"\n\s*\n", text)
     segs = []
     for p in parts:
-        p = p.strip()
-        if not p:
+        # 문단 내 단일 줄바꿈은 문장 연속으로 보고 공백으로 결합(중간 잘림 방지).
+        joined = re.sub(r"\s*\n\s*", " ", p).strip()
+        if not joined:
             continue
-        for s in re.split(r"(?<=[.!?。])\s+|\n", p):
-            s = s.strip(" -*#\t")
-            if len(s) >= 8:
+        for s in re.split(r"(?<=[.!?。])\s+", joined):
+            s = s.strip(" -*#\t·")
+            if len(s) >= _MIN_SEG_LEN and not _is_noise(s):
                 segs.append(s)
     return segs
 
@@ -70,10 +91,24 @@ def _classify_domain(text: str) -> str:
     return best if scores[best] > 0 else "일반"
 
 
+# 키워드에서 제외할 한국어 불용어(조사·접속사·의존명사·형식어). 형태소 분석기 없이
+# (망분리) 빈도 상위에 올라오는 조사/접속사류를 제거해 의미 키워드만 남긴다.
+_STOPWORDS = {
+    "또는", "관한", "관하여", "대한", "대하여", "위한", "위하여", "그리고", "그러나", "따라",
+    "따른", "따라서", "이하", "이상", "경우", "때문", "통해", "통하여", "및", "등", "등의",
+    "기준", "관련", "해당", "각각", "모든", "어느", "다음", "같은", "있는", "없는", "하는",
+    "되는", "이러한", "그러한", "우리", "본", "제", "그", "이", "저", "것", "수", "바",
+    "한다", "된다", "했다", "하고", "하여", "하며", "된", "하는데", "이다", "있다", "없다",
+}
+
+
 def _top_keywords(text: str, n: int = 10):
+    # 2자 이상 한글/영문 토큰 빈도 상위 n개. 단 조사·접속사류 불용어는 제외한다.
     words = re.findall(r"[가-힣A-Za-z]{2,}", text)
     freq = {}
     for w in words:
+        if w in _STOPWORDS:
+            continue
         freq[w] = freq.get(w, 0) + 1
     return [w for w, _ in sorted(freq.items(), key=lambda x: -x[1])[:n]]
 
@@ -176,43 +211,49 @@ _TASKS = [
 ]
 
 def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=None) -> dict:
-    # 한 세그먼트의 4개 앵글 결과물을 LLM 1회 호출(JSON)로 일괄 생성한다.
-    # 세그먼트마다 4번 부르던 것을 1번으로 줄여 속도를 약 4배 개선. 실패/미가용·
-    # 빈 값·예산 초과는 앵글별 휴리스틱으로 폴백해 항상 input과 다른 결과물을 보장한다.
+    # 한 세그먼트의 4개 앵글 결과물을 만들어 유효한 것만 dict로 돌려준다.
+    # - 실제 LLM 가용: 1회 호출(JSON) 후 15자 이상인 앵글만 채택. 예산 소진·빈 응답·
+    #   저품질 앵글은 폴백 없이 드롭한다(가짜 템플릿이 학습 데이터를 오염하지 않게).
+    # - LLM 미가용(mock/테스트): 결정론적 구조 출력으로 파이프라인 end-to-end 보장.
+    #   이 출력은 학습용이 아니며 llm_mode=mock으로 표시된다.
     kinds = [k for _, k in _TASKS]
+    if not llm.available():
+        return {k: _mock_output(k, seg, meta, expert) for k in kinds}
     use_llm, timeout = _budget_timeout(deadline)
-    if use_llm and llm.available():
-        data = llm.generate_json(
-            "다음 내용을 바탕으로 네 가지 결과물을 만들어라. 원문을 그대로 반복하지 말라.\n"
-            "- explain: 업무 담당자가 이해하도록 2~3문장 설명\n"
-            "- summarize: 한 문장 요약\n"
-            "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
-            "- terms: 핵심 용어 2~3개와 각 의미\n"
-            '반드시 {"explain":"","summarize":"","rule":"","terms":""} 형식의 JSON만 출력하라.\n\n'
-            f"내용:\n{seg}",
-            system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
-            timeout=timeout,
-        )
-        if isinstance(data, dict):
-            return {
-                k: (str(data.get(k, "")).strip()
-                    if len(str(data.get(k, "")).strip()) >= 15
-                    else _heuristic_output(k, seg, meta, expert))
-                for k in kinds
-            }
-    return {k: _heuristic_output(k, seg, meta, expert) for k in kinds}
+    if not use_llm:
+        return {}  # 예산 소진 → 이 청크는 드롭
+    data = llm.generate_json(
+        "다음 내용을 바탕으로 네 가지 결과물을 만들어라. 원문을 그대로 반복하지 말라.\n"
+        "- explain: 업무 담당자가 이해하도록 2~3문장 설명\n"
+        "- summarize: 한 문장 요약\n"
+        "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
+        "- terms: 핵심 용어 2~3개와 각 의미\n"
+        '반드시 {"explain":"","summarize":"","rule":"","terms":""} 형식의 JSON만 출력하라.\n\n'
+        f"내용:\n{seg}",
+        system=f"너는 {expert}다. 한국어로 간결하고 정확하게 답하라.",
+        timeout=timeout,
+    )
+    if not isinstance(data, dict):
+        return {}
+    out = {}
+    for k in kinds:
+        v = str(data.get(k, "")).strip()
+        if len(v) >= 15:  # 유효 앵글만 채택, 나머지는 드롭
+            out[k] = v
+    return out
 
 
-def _heuristic_output(kind: str, seg: str, meta: dict, expert: str) -> str:
-    # LLM 미가용 시에도 input과 구분되는(echo가 아닌) 결과물을 결정론적으로 만든다.
+def _mock_output(kind: str, seg: str, meta: dict, expert: str) -> str:
+    # LLM 미가용(mock/테스트) 전용 결정론적 출력. 실제 LLM 경로에서는 호출되지 않으며
+    # 학습용 데이터가 아니다(파이프라인 end-to-end 구동·구조 검증 목적).
     kw = ", ".join(meta["keywords"][:3]) or "핵심 사항"
     if kind == "summarize":
-        return f"요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다."
+        return f"[mock] 요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다."
     if kind == "rule":
-        return f"처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다."
+        return f"[mock] 처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다."
     if kind == "terms":
-        return f"핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다."
-    return f"{expert}의 관점에서 보면 이 내용은 다음을 뜻한다 — {seg}. 이는 업무 수행에 필요한 사항이다."
+        return f"[mock] 핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다."
+    return f"[mock] {expert}의 관점에서 보면 이 내용은 다음을 뜻한다 — {seg}."
 
 
 def _derive_question(kind: str, seg: str) -> str:
@@ -233,7 +274,7 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
 
     # 세그먼트별 LLM 호출은 I/O 대기(HTTP)라, 스레드풀로 동시에 보내 벽시계 시간을 줄인다.
     # 결과는 인덱스 순서대로 모아 데이터셋 정렬을 유지한다. deadline이 지나면 아직
-    # 시작 안 한 작업은 _derive_outputs 안에서 휴리스틱으로 즉시 폴백한다.
+    # 시작 안 한 작업은 _derive_outputs 안에서 빈 결과가 되어 해당 청크가 드롭된다.
     seg_outputs = [None] * len(segs)
     with ThreadPoolExecutor(max_workers=config.llm_concurrency) as ex:
         futs = {ex.submit(_derive_outputs, seg, meta, expert, llm, deadline): i
@@ -242,17 +283,19 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
             seg_outputs[futs[fut]] = fut.result()
 
     for i, seg in enumerate(segs):
-        # RAG 패시지는 원문 단위로 1건만 (중복 패시지 방지)
+        # RAG 패시지는 원문 자체(생성물 아님)라 항상 유지한다.
         rags.append({
             "id": f"DOC-{i+1:04d}",
             "title": seg[:30],
             "content": seg,
             "metadata": {"keyword": meta["keywords"][:3]},
         })
-        # instruction/QA는 segment × 과제앵글로 서로 다른 고유 행을 만든다
-        outputs = seg_outputs[i]
+        # instruction/QA는 LLM이 실제로 만든 앵글만 레코드로 만든다(못 만든 앵글은 드롭).
+        outputs = seg_outputs[i] or {}
         for tmpl, kind in _TASKS:
-            output = outputs[kind]
+            output = outputs.get(kind)
+            if not output:
+                continue
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
                 "input": seg,
@@ -265,8 +308,9 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
 # ---------- STEP 4.5 Unsloth 포맷 변환 ----------
 def to_unsloth_formats(datasets: dict) -> dict:
     raw = [{"text": d["output"]} for d in datasets["instruction"]]
+    # Unsloth/HuggingFace 표준 alpaca 매핑은 소문자 키를 기대한다(대문자면 KeyError 위험).
     alpaca = [
-        {"Instruction": d["instruction"], "Input": d["input"], "Output": d["output"]}
+        {"instruction": d["instruction"], "input": d["input"], "output": d["output"]}
         for d in datasets["instruction"]
     ]
     sharegpt = [

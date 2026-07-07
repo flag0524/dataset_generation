@@ -77,7 +77,8 @@ def test_t3_dataset_schemas(result):
 def test_t4_formats(result):
     u = result["unsloth"]
     assert all("text" in r for r in u["raw"])  # T4-1
-    assert all(set(r) == {"Instruction", "Input", "Output"} for r in u["alpaca"])
+    # Unsloth/HF 표준에 맞춰 alpaca 키는 소문자
+    assert all(set(r) == {"instruction", "input", "output"} for r in u["alpaca"])
     for c in u["sharegpt"]:  # T4-2
         assert [m["from"] for m in c["conversations"]] == ["human", "gpt"]
     for c in u["chatml"]:  # T4-3
@@ -96,34 +97,20 @@ def test_t5_json_exists(result):
     assert os.path.exists(os.path.join(result["output_dir"], result["artifacts"]["json"]))  # T5-2
 
 
-# T6 검증 루프
+# T6 검증 루프 — 합성 증강 제거 후 새 의미: 크기는 경고, 품질 점수는 형식·충실도로만.
 def test_t6_validation(result):
     v = result["validation"]
-    assert v["row_count"] >= 100  # T6-3 AC-05
-    assert v["quality_score"] >= 90  # T6-4 AC-06
+    assert v["row_count"] > 0  # 실제 생성 레코드가 존재
+    assert v["quality_score"] >= 90  # T6-4 AC-06 (형식·충실도)
     assert v["status"] == "PASS"
     assert v["format_consistent"] is True  # T6-5
 
 
-def test_t6_reaugment_on_duplicates(monkeypatch, tmp_path):
-    # 원본 qa에 중복쌍이 있으면 중복 제거 후 행 수가 min_rows 아래로 떨어진다.
-    # 재증강 루프가 부족분을 채워 크기 게이트를 통과시키는지 검증한다 (회귀).
-    from src import runner
-
-    orig = runner.pipeline.generate_datasets
-
-    def dup_datasets(text, meta, extracted, llm, deadline=None):
-        ds = orig(text, meta, extracted, llm, deadline=deadline)
-        for i in range(10):  # 앞쪽 10개 qa를 동일 쌍으로 덮어써 중복 9개를 강제
-            ds["qa"][i] = dict(ds["qa"][0])
-        return ds
-
-    monkeypatch.setattr(runner.pipeline, "generate_datasets", dup_datasets)
-    v = runner.run(SAMPLE, out_dir=str(tmp_path))["validation"]
-    # 재증강 루프가 중복을 정리하고 부족분을 채워 크기 게이트를 통과해야 한다.
-    assert v["size_ok"] is True
-    assert v["row_count"] >= 100
-    assert v["status"] == "PASS"
+def test_t6_no_synthetic_padding(result):
+    # 합성 증강을 제거했으므로 산출 레코드는 청크×앵글 상한을 넘지 않는다(패딩 없음).
+    segs = pipeline._segments(open(SAMPLE, encoding="utf-8").read())
+    v = result["validation"]
+    assert v["row_count"] <= len(segs) * len(pipeline._TASKS)
 
 
 # 응답 시간 게이트: 느린 LLM이라도 시간 예산이 벽시계를 유계로 만든다 (회귀)
@@ -149,15 +136,17 @@ def test_s_t4_time_budget_bounds_wallclock():
     slow = _SlowLLM()
 
     # 예산 없이 40개를 동시성 5로 돌리면 8배치 × 0.4초 = 약 3.2초.
-    # 1초 예산이면 첫 배치만 LLM 처리되고 나머지는 휴리스틱으로 폴백해야 한다.
-    deadline = time.monotonic() + 1.0
+    # 2초 예산이면 남은 시간이 1초를 넘는 동안만 LLM을 시도하고, 이후 청크는 드롭된다
+    # (_budget_timeout은 1초 미만 남으면 호출을 건너뛴다).
+    deadline = time.monotonic() + 2.0
     t0 = time.monotonic()
     ds = pipeline.generate_datasets("", meta, extracted, slow, deadline=deadline)
     elapsed = time.monotonic() - t0
 
-    assert elapsed < 2.5  # 예산이 동작하면 8배치를 다 돌지 않는다
-    assert slow.calls < len(segs)  # 일부 세그먼트는 LLM 호출 없이 폴백
-    assert len(ds["instruction"]) == len(segs) * len(pipeline._TASKS)  # 행 수는 그대로
+    assert elapsed < 3.0  # 예산이 동작하면 8배치를 다 돌지 않는다
+    assert slow.calls < len(segs)  # 일부 세그먼트는 LLM 호출 없이 드롭
+    # 드롭 때문에 레코드는 전체보다 적고(폴백 패딩 없음), 실제 생성된 것만 남는다.
+    assert 0 < len(ds["instruction"]) < len(segs) * len(pipeline._TASKS)
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 

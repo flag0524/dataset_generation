@@ -3,7 +3,7 @@ import os
 import re
 import time
 
-from . import pipeline, synthetic, export, validate
+from . import pipeline, export, validate
 from .config import config
 from .llm import LLMClient
 from .loaders import load_document
@@ -23,14 +23,17 @@ _STAGES = [
 ]
 
 
-def run(path: str, out_dir: str = None, augment_to_min: bool = True, on_progress=None) -> dict:
+def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = None) -> dict:
+    # time_budget(초): 양수면 STEP3~4 LLM 작업에 벽시계 예산을 걸어 초과 청크를 드롭한다
+    # (웹 '빠른 미리보기' 전용, 산출물은 미완성·학습용 아님). None이면 config 값을 쓰며
+    # 기본 0=무제한이라 데이터셋 생성은 모든 청크를 실제 LLM으로 만든다.
     out_dir = out_dir or config.output_dir
     os.makedirs(out_dir, exist_ok=True)
     llm = LLMClient()
     document_name = os.path.basename(path)
 
-    # 실제 LLM을 쓸 때만 STEP3~4에 벽시계 예산을 건다. mock은 이미 빠르므로 무제한.
-    deadline = time.monotonic() + config.llm_time_budget if llm.available() else None
+    budget = time_budget if time_budget is not None else config.llm_time_budget
+    deadline = time.monotonic() + budget if (budget and budget > 0 and llm.available()) else None
 
     total = len(_STAGES)
 
@@ -51,36 +54,27 @@ def run(path: str, out_dir: str = None, augment_to_min: bool = True, on_progress
     _emit(4)
     extracted = pipeline.extract_knowledge(text, meta, llm, deadline=deadline)
 
-    # STEP4
+    # STEP4 — 실제 LLM으로 생성한 청크만 남는다(합성 증강 없음: 품질 우선).
     _emit(5)
     datasets = pipeline.generate_datasets(text, meta, extracted, llm, deadline=deadline)
 
-    # STEP4 보조: 분량 부족 시 합성 증강
-    if augment_to_min:
-        datasets = synthetic.augment(datasets, config.min_rows)
-
-    # STEP4.5 / STEP5·6 / STEP7
+    # STEP4.5 / STEP5·6 / STEP7 — 검증으로 중복·저품질을 제거해 최종 레코드를 만든다.
     _emit(6)
-    unsloth = pipeline.to_unsloth_formats(datasets)
     records = pipeline.to_records(meta, datasets)
     _emit(7)
-    validation = validate.run_validation(datasets, unsloth, records)
-
-    # 증강은 raw 행 기준이지만 크기 게이트는 중복 제거 후 기준이라, 원본에
-    # 중복쌍이 있으면 행 수가 min_rows 아래로 떨어진다. 중복을 먼저 제거한 뒤
-    # 고유 base에서 재증강하면(변형은 항상 고유) 결정적으로 min_rows를 채운다.
-    if augment_to_min:
-        for _ in range(5):
-            deduped_count = validation["row_count"] + validation["quality_filtered"]
-            if deduped_count >= config.min_rows:
-                break
-            datasets = synthetic.dedupe(datasets)
-            datasets = synthetic.augment(datasets, config.min_rows)
-            unsloth = pipeline.to_unsloth_formats(datasets)
-            records = pipeline.to_records(meta, datasets)
-            validation = validate.run_validation(datasets, unsloth, records)
-
+    validation = validate.run_validation(datasets, pipeline.to_unsloth_formats(datasets), records)
     final_records = validation["records"]
+
+    # Unsloth JSONL은 정제 후 최종 레코드에서 생성해 JSON/CSV와 건수·내용을 일치시킨다
+    # (과거엔 정제 전 datasets에서 생성돼 미정제본이 학습에 쓰이는 문제가 있었다).
+    clean_datasets = {
+        "instruction": [{"instruction": r["instruction"], "input": r["input"], "output": r["output"]}
+                        for r in final_records],
+        "qa": [{"question": r["question"], "answer": r["answer"], "source": r["source_document"]}
+               for r in final_records],
+        "rag": datasets["rag"],
+    }
+    unsloth = pipeline.to_unsloth_formats(clean_datasets)
 
     # STEP5/6/8 산출 — 파일명은 도메인 업무명 접두를 따른다(예: 공공행정_dataset.csv).
     _emit(8)
