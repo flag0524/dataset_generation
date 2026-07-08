@@ -22,8 +22,10 @@ pip install -r requirements.txt
 python -m pytest tests/ -q                                         # 검증 매트릭스(tests.md)
 python -m pytest tests/test_pipeline.py::test_t6_validation -q     # 단일 테스트
 python -c "from src.runner import run; run('samples/sample_admin.txt')"  # 파이프라인 1회
-uvicorn web.app:app --reload                                       # 웹 UI :8000
+python -m uvicorn web.app:app --reload                             # 웹 UI :8000
 ```
+
+웹 서버는 반드시 `python -m uvicorn`으로 띄운다. 맨몸 `uvicorn`은 PATH상 다른 파이썬(의존성 미설치)이 잡혀 `No module named 'olefile'` 등 런타임 오류가 난다.
 
 런타임 동작은 환경 변수로 제어한다(`src/config.py`). 주요 값: `USE_MOCK_LLM`(기본 auto, `false`로 두면 실제 Ollama 강제), `OLLAMA_HOST`/`OLLAMA_MODEL`, `LLM_CONCURRENCY`(STEP4 동시 호출), `OUTPUT_DIR`, 검증 게이트 임계값(`MIN_ROWS` 등 — env로 조정 가능, 기본값은 TRD §5와 동일).
 
