@@ -149,7 +149,11 @@ def _load_hwp(path):
 
     if not olefile.isOleFile(path):
         raise ValueError("유효한 HWP(OLE) 파일이 아닙니다.")
-    ole = olefile.OleFileIO(path)
+    try:
+        ole = olefile.OleFileIO(path)
+    except Exception as e:
+        # OLE 매직은 맞지만 내부 구조가 깨진 파일 → 깔끔한 400으로 안내(500 방지).
+        raise ValueError("손상된 HWP(OLE) 파일입니다. PDF 또는 DOCX로 변환해 업로드하세요.") from e
     try:
         if ole.exists("PrvText"):
             text = ole.openstream("PrvText").read().decode("utf-16-le", errors="ignore").strip()
