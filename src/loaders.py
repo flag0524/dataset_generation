@@ -92,11 +92,41 @@ def _read_text(path):
         return f.read()
 
 
+# 텍스트 레이어가 이보다 적은 페이지는 이미지 기반(스캔)으로 보고 OCR로 보완한다.
+_PDF_OCR_MIN_CHARS = 30
+
+
 def _load_pdf(path):
     from pypdf import PdfReader
 
     reader = PdfReader(path)
-    return "\n".join((p.extract_text() or "") for p in reader.pages)
+    pages = [(p.extract_text() or "").strip() for p in reader.pages]
+    # 스캔/이미지 PDF는 pypdf가 텍스트를 거의 못 뽑아 데이터가 비어버린다.
+    # 텍스트가 빈약한 페이지만 렌더링해 OCR로 채운다(텍스트 페이지는 그대로).
+    sparse = [i for i, t in enumerate(pages) if len(t) < _PDF_OCR_MIN_CHARS]
+    if sparse:
+        pages = _ocr_pdf_pages(path, pages, sparse)
+    return "\n".join(pages)
+
+
+def _ocr_pdf_pages(path, pages, sparse):
+    # sparse 페이지를 pypdfium2로 200DPI 렌더링해 OCR한다. 렌더러/Tesseract 미설치 시
+    # 조용히 빈약한 데이터를 내지 않고 명확한 안내(ValueError)로 폴백한다.
+    try:
+        import pypdfium2 as pdfium
+    except ModuleNotFoundError as e:
+        raise ValueError(
+            "이미지 기반(스캔) PDF로 보입니다. PDF 렌더러(pypdfium2)가 설치되지 않아 "
+            "OCR할 수 없습니다. 오프라인 반입하거나 텍스트 PDF로 변환해 업로드하세요."
+        ) from e
+    pdf = pdfium.PdfDocument(path)
+    try:
+        for i in sparse:
+            img = pdf[i].render(scale=200 / 72).to_pil()
+            pages[i] = _ocr_image(img).strip()
+    finally:
+        pdf.close()
+    return pages
 
 
 def _load_docx(path):
@@ -168,28 +198,36 @@ def _load_hwp(path):
     )
 
 
-def _load_ocr(path):
-    # Tesseract로 한국어+영어 이미지에서 텍스트 추출.
-    # 바이너리 경로는 PATH 또는 TESSERACT_CMD, 언어데이터는 TESSDATA_PREFIX로 지정한다
-    # (머신별 경로를 코드에 하드코딩하지 않기 위함). 의존성·바이너리 부재는 명확히 안내한다.
+def _ocr_image(img):
+    # PIL 이미지를 Tesseract(한국어+영어)로 OCR한다. 이미지 파일 로더와 PDF 페이지
+    # OCR 폴백이 공유한다. 바이너리 경로는 PATH 또는 TESSERACT_CMD, 언어데이터는
+    # TESSDATA_PREFIX로 지정한다(머신별 경로 하드코딩 회피). 의존성·바이너리 부재는 명확히 안내.
     try:
         import pytesseract
-        from PIL import Image
     except ModuleNotFoundError as e:
         raise ValueError(
-            "OCR 의존성(pytesseract/Pillow)이 설치되지 않았습니다. "
-            "오프라인 설치 패키지로 반입하세요."
+            "OCR 의존성(pytesseract)이 설치되지 않았습니다. 오프라인 설치 패키지로 반입하세요."
         ) from e
 
     cmd = os.environ.get("TESSERACT_CMD")
     if cmd:
         pytesseract.pytesseract.tesseract_cmd = cmd
 
-    # 언어데이터 위치는 TESSDATA_PREFIX 환경변수로 전달한다(서브프로세스가 상속).
     try:
-        return pytesseract.image_to_string(Image.open(path), lang="kor+eng")
+        return pytesseract.image_to_string(img, lang="kor+eng")
     except pytesseract.TesseractNotFoundError as e:
         raise ValueError(
             "Tesseract 실행파일을 찾을 수 없습니다. TESSERACT_CMD 환경변수로 "
             "경로를 지정하거나 오프라인 설치하세요."
         ) from e
+
+
+def _load_ocr(path):
+    # 이미지 파일에서 텍스트 추출(Tesseract). PDF 스캔 페이지도 같은 _ocr_image를 쓴다.
+    try:
+        from PIL import Image
+    except ModuleNotFoundError as e:
+        raise ValueError(
+            "OCR 의존성(Pillow)이 설치되지 않았습니다. 오프라인 설치 패키지로 반입하세요."
+        ) from e
+    return _ocr_image(Image.open(path))
