@@ -175,6 +175,39 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 로더: 텍스트 PDF는 OCR을 타지 않고, 이미지(스캔) PDF는 OCR 폴백을 탄다 (회귀)
+def test_s_pdf_text_bypasses_ocr(tmp_path, monkeypatch):
+    fitz = pytest.importorskip("fitz")
+    from src import loaders
+
+    # fitz 기본 폰트는 한글 글리프를 embed하지 못하므로 픽스처는 ASCII로 둔다
+    # (텍스트 PDF가 OCR을 타지 않는지만 검증하면 되어 언어는 무관).
+    p = tmp_path / "text.pdf"
+    doc = fitz.open()
+    doc.new_page().insert_text((72, 72), "This is a sufficiently long real body text. " * 3)
+    doc.save(str(p)); doc.close()
+
+    def _boom(img):
+        raise AssertionError("텍스트 PDF인데 OCR이 호출됨")
+
+    monkeypatch.setattr(loaders, "_ocr_image", _boom)
+    assert "real body text" in loaders.load_document(str(p))
+
+
+def test_s_pdf_scanned_triggers_ocr(tmp_path, monkeypatch):
+    fitz = pytest.importorskip("fitz")
+    pytest.importorskip("pypdfium2")
+    from src import loaders
+
+    p = tmp_path / "scan.pdf"
+    doc = fitz.open()
+    doc.new_page()  # 텍스트 없는 빈 페이지 → 이미지 기반으로 간주
+    doc.save(str(p)); doc.close()
+
+    monkeypatch.setattr(loaders, "_ocr_image", lambda img: "OCR로복원한텍스트")
+    assert "OCR로복원한텍스트" in loaders.load_document(str(p))
+
+
 # 로더: ZIP 컨테이너 포맷(.docx/.xlsx/.pptx)에 비-ZIP 바이트가 오면
 # 영문 BadZipFile 대신 깨끗한 한국어 ValueError로 변환한다 (회귀)
 @pytest.mark.parametrize("ext", [".docx", ".xlsx", ".pptx"])
