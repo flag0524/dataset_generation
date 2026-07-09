@@ -63,16 +63,24 @@ _NOISE_PATTERNS = [
     re.compile(r"^\d+\s*$"),                  # 페이지 번호만
     re.compile(r"^[-\s]*\d+[-\s]*$"),         # - 12 - 형태 페이지 번호
 ]
-# 신구조문 대비표 파편 — '(현행과 같음)', '<신 설>', '<삭 제>' 같은 조각은 문맥이 없어
-# 환각성 output을 만든다(보고서 2-4). 이런 마커가 있으면 저품질 청크로 본다.
-_AMENDMENT_NOISE = re.compile(r"현행과\s*같음|<\s*신\s*설\s*>|<\s*삭\s*제\s*>|신구조문")
+# 신구조문 대비표의 보일러플레이트 마커 — '(현행과 같음)', '(생 략)', '<신 설>' 등.
+# 이 조각 자체는 문맥이 없어 환각을 유발하지만(보고서 2-4), 대비표의 '개정안' 열에는
+# 실제 개정 조문이 함께 들어 있다. 그래서 청크를 통째로 버리지 않고 마커만 제거한 뒤
+# 실질 내용이 남으면 살린다(법안의 핵심인 신설·개정 조문 보존).
+_AMENDMENT_STRIP = re.compile(
+    r"\(현행[^)]*같음\)"            # (현행과 같음), (현행 제3호와 같음)
+    r"|\(생\s*략\)"                  # (생 략)
+    r"|<\s*신\s*설\s*>"              # <신 설>
+    r"|<\s*삭\s*제\s*>"              # <삭 제>
+    r"|신[·ㆍ․]?\s*구조문\s*대비표"  # 표 제목
+    r"|[-−–—]{3,}"                   # 대비표의 '----' 채움
+    r"|(?:^|\s)-\s*\d+\s*-(?=\s|$)"  # '- 6 -' 형태 페이지 마커
+)
 
 
 def _is_noise(s: str) -> bool:
-    # 목차 점선·페이지번호·신구조문 대비표 파편 등 학습 가치 없는 청크인지 판별한다.
+    # 목차 점선·페이지번호·구분선 등 학습 가치 없는 구조 노이즈인지 판별한다.
     if any(p.match(s) for p in _NOISE_PATTERNS):
-        return True
-    if _AMENDMENT_NOISE.search(s):
         return True
     # 점선(dot leader)이 대부분을 차지하는 목차 항목 (예: "제안경위 ·········· 3")
     dots = sum(s.count(c) for c in ".·․…‥∙⋯")
@@ -82,7 +90,7 @@ def _is_noise(s: str) -> bool:
 def _segments(text: str):
     # 문서를 의미 있는 문장 청크로 분해한다. PDF 추출 텍스트는 문장 중간에서 줄바꿈되므로,
     # 먼저 문단 내 줄바꿈을 공백으로 이어 붙여 문장이 중간에서 잘리지 않게 한 뒤,
-    # 문장 경계(마침표·물음표 등)로만 분할한다. 목차·대비표 파편·초단문은 걸러낸다.
+    # 문장 경계로 분할한다. 목차·초단문은 버리고, 대비표 마커는 제거해 실질 내용만 남긴다.
     parts = re.split(r"\n\s*\n", text)
     segs = []
     for p in parts:
@@ -92,8 +100,12 @@ def _segments(text: str):
             continue
         for s in re.split(r"(?<=[.!?。])\s+", joined):
             s = s.strip(" -*#\t·")
-            if len(s) >= config.min_seg_len and not _is_noise(s):
-                segs.append(s)
+            if _is_noise(s):
+                continue
+            # 대비표 마커·페이지 조각을 제거하고 남은 실질 내용이 충분하면 채택.
+            cleaned = re.sub(r"\s+", " ", _AMENDMENT_STRIP.sub(" ", s)).strip(" ·⋅.")
+            if len(cleaned) >= config.min_seg_len:
+                segs.append(cleaned)
     return segs
 
 

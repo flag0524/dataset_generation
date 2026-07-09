@@ -176,6 +176,16 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 청킹: 신구조문대비표의 마커는 제거하되 실질 개정 조문은 살린다 (통째 드롭 금지)
+def test_s_amendment_table_keeps_substance():
+    para = ("제14조의2(공무원 등에 대한 교육의 실시) ① 중앙행정기관의 장, 지방자치단체의 장은 "
+            "소속 공무원 및 직원 등에게 북한주민의 인권에 관한 교육을 실시하고 그 결과를 통일부장관에게 제출하여야 한다. "
+            "<신 설> (현행과 같음)")
+    joined = " ".join(pipeline._segments(para))
+    assert "제14조의2" in joined and "통일부장관" in joined  # 실질 개정 조문 보존
+    assert "현행과 같음" not in joined and "신 설" not in joined  # 보일러플레이트 제거
+
+
 # 도메인 분류 정밀화: LLM 가용 시 문맥 판정을 따르고, 미가용/무효 응답이면 키워드 폴백
 def test_s_domain_llm_two_tier():
     class _Stub:
