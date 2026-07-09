@@ -99,7 +99,7 @@ def _segments(text: str):
 
 # ---------- STEP 1. 문서 분석 ----------
 def analyze(text: str, document_name: str, llm: LLMClient) -> dict:
-    domain = _classify_domain(text)
+    domain = _classify_domain(text, llm)
     keywords = _top_keywords(text)
     purpose = _segments(text)[0] if _segments(text) else ""
     return {
@@ -110,7 +110,30 @@ def analyze(text: str, document_name: str, llm: LLMClient) -> dict:
     }
 
 
-def _classify_domain(text: str) -> str:
+def _classify_domain(text: str, llm: LLMClient = None) -> str:
+    # 정밀 분류: LLM이 가용하면 문맥으로 주제 도메인을 고른다(흔한 단어 지배 문제 회피).
+    # 미가용(mock/테스트)이거나 목록 밖 응답이면 키워드 카운트로 폴백한다.
+    if llm is not None and llm.available():
+        d = _llm_classify_domain(text, llm)
+        if d in DOMAIN_KEYWORDS or d == "일반":
+            return d
+    return _keyword_classify_domain(text)
+
+
+def _llm_classify_domain(text: str, llm: LLMClient) -> str:
+    domains = list(EXPERT_ROUTING)  # '일반' 포함
+    data = llm.generate_json(
+        f"다음 문서의 주제 도메인을 아래 목록에서 정확히 하나만 골라라: {', '.join(domains)}.\n"
+        "위원회/발의 형식이 아니라 문서가 실제로 다루는 주제로 판단하라"
+        "(예: 통일·남북·조약 → 외교, 병역·군 → 국방, 건설·공사 → 건설국토).\n"
+        '반드시 JSON만: {"domain":"<목록 중 하나>"}\n\n'
+        f"문서 앞부분:\n{text[:2000]}",
+        system="너는 한국어 공공문서 도메인 분류기다. 반드시 주어진 목록 중 하나만 고른다.",
+    )
+    return str((data or {}).get("domain", "")).strip()
+
+
+def _keyword_classify_domain(text: str) -> str:
     scores = {d: sum(text.count(k) for k in kws) for d, kws in DOMAIN_KEYWORDS.items()}
     best = max(scores, key=scores.get)
     return best if scores[best] > 0 else "일반"

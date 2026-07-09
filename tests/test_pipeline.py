@@ -176,6 +176,23 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 도메인 분류 정밀화: LLM 가용 시 문맥 판정을 따르고, 미가용/무효 응답이면 키워드 폴백
+def test_s_domain_llm_two_tier():
+    class _Stub:
+        def __init__(self, d): self.d = d
+        def available(self): return True
+        def generate_json(self, prompt, system="", timeout=None): return {"domain": self.d}
+
+    # 키워드로는 공공행정이 우세하지만 LLM이 외교로 판정 → LLM을 따른다
+    text = "주민 주민 공무원 공무원 행정 통일"
+    assert pipeline._keyword_classify_domain(text) == "공공행정"
+    assert pipeline._classify_domain(text, _Stub("외교")) == "외교"
+    # LLM 미가용이면 키워드 폴백
+    assert pipeline._classify_domain(text, None) == "공공행정"
+    # LLM이 목록 밖 값을 주면 키워드 폴백
+    assert pipeline._classify_domain(text, _Stub("이상한도메인")) == "공공행정"
+
+
 # 도메인 분류기 확장: 분야별 대표 키워드에 각 도메인으로 라우팅된다
 def test_s_domain_routing_expanded():
     cases = {
