@@ -176,6 +176,22 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# P1-4: 다중 소스 통합 — 여러 문서를 하나의 데이터셋으로 합치고 소스가 보존된다
+def test_s_run_many_multisource(tmp_path):
+    from src.runner import run_many
+    a = tmp_path / "doc_a.txt"; a.write_text("민원 접수 시 7일 이내에 담당 부서가 처리해야 한다. 처리 결과는 신청인에게 통지한다.", encoding="utf-8")
+    b = tmp_path / "doc_b.txt"; b.write_text("공제조합은 면책된 채무를 이유로 보증을 거부하지 못한다. 위반 시 벌금에 처한다.", encoding="utf-8")
+    r = run_many([str(a), str(b)], out_dir=str(tmp_path / "out"), name="법률_통합")
+    # 두 문서 모두 소스로 집계
+    assert len(r["sources"]) == 2
+    recs = json.load(open(os.path.join(r["output_dir"], r["artifacts"]["json"]), encoding="utf-8"))
+    srcs = {x["metadata"]["source"] for x in recs}
+    assert {"doc_a.txt", "doc_b.txt"} <= srcs  # 레코드에 두 소스가 모두 존재
+    # id는 통합 후 유일
+    ids = [x["id"] for x in recs]
+    assert len(ids) == len(set(ids))
+
+
 # 근거성(grounding) 흔적: 검증·레코드·JSON 메타데이터에 근거 점수/플래그 저장 (P0-3)
 def test_s_grounding_trace(result):
     v = result["validation"]
