@@ -176,6 +176,20 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 도메인 분류기 확장: 분야별 대표 키워드에 각 도메인으로 라우팅된다
+def test_s_domain_routing_expanded():
+    cases = {
+        "국방": "국방 병역 안보 군인 부대 방위 국군 장병 예비군",
+        "건설국토": "건설 공사 시공 주택 도로 부동산 건축 국토 수급인",
+        "외교": "외교 통일 조약 협정 국제 남북 대사 수교 재외국민",
+        "환경": "환경 오염 폐기물 배출 탄소 기후 재활용 온실가스 대기",
+        "교육": "교육 학교 학생 교원 대학 교사 입시 학위 유치원",
+    }
+    for dom, text in cases.items():
+        assert pipeline._classify_domain(text) == dom
+        assert dom in pipeline.EXPERT_ROUTING
+
+
 # P1-4: 다중 소스 통합 — 여러 문서를 하나의 데이터셋으로 합치고 소스가 보존된다
 def test_s_run_many_multisource(tmp_path):
     from src.runner import run_many
