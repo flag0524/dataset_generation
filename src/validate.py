@@ -1,6 +1,20 @@
-# STEP7 검증 루프: Validator·LLM Judge·크기/구조 점검 (TRD §5)
+# STEP7 검증 루프: Validator·LLM Judge·근거성·크기/구조 점검 (TRD §5)
+import re
+
 from .config import config
 from .schemas import validate_instruction, validate_qa, validate_rag
+
+
+def _tokens(s: str) -> set:
+    return set(re.findall(r"[가-힣A-Za-z]{2,}", s or ""))
+
+
+def _grounding(output: str, source: str) -> float:
+    # output이 원문(source=input 청크)의 어휘를 얼마나 공유하는지(0~1). 근거성 신호.
+    ot = _tokens(output)
+    if not ot:
+        return 0.0
+    return round(len(ot & _tokens(source)) / len(ot), 3)
 
 
 def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
@@ -41,6 +55,17 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
     quality_score = _score(judged, format_ok)
     status = "PASS" if quality_score >= config.quality_pass_score else "FAIL"
 
+    # 6) 근거성(grounding) — 각 레코드 output이 원문(input)에 근거하는지 점수·플래그로
+    #    레코드에 저장한다(감사 추적성). 법률 도메인은 오답 비용이 커 저근거를 명시적으로 표시.
+    for r in judged:
+        g = _grounding(r["output"], r["input"])
+        r["grounding"] = g
+        r["grounded"] = g >= config.grounding_min
+    mean_grounding = round(sum(r["grounding"] for r in judged) / len(judged), 3) if judged else 0.0
+    low_grounding = sum(1 for r in judged if not r["grounded"])
+    if judged and mean_grounding < config.grounding_min:
+        issues.append(f"경고: 평균 근거성 {mean_grounding} < 기준 {config.grounding_min} (원문 근거 확인 권장)")
+
     return {
         "quality_score": quality_score,
         "status": status,
@@ -49,6 +74,8 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
         "quality_filtered": quality_filtered,
         "format_consistent": format_ok,
         "size_ok": size_ok,
+        "mean_grounding": mean_grounding,
+        "low_grounding": low_grounding,
         "issues": issues,
         "records": judged,
     }

@@ -31,5 +31,9 @@ class Config:
     # 청크(세그먼트) 최소 길이(자). 신구조문 대비표 파편·초단문 저품질 청크를 거른다.
     min_seg_len: int = int(os.getenv("MIN_SEG_LEN", "50"))
 
+    # 근거성(grounding) 최소 기준. output이 원문(input)과 어휘를 이만큼 공유하지 못하면
+    # 근거 미확인으로 플래그한다. LLM이 재진술하므로 완전 일치는 아니며 감사 추적용 신호다.
+    grounding_min: float = float(os.getenv("GROUNDING_MIN", "0.25"))
+
 
 config = Config()
