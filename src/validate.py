@@ -96,17 +96,32 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
     if judged and mean_grounding < config.grounding_min:
         issues.append(f"경고: 평균 근거성 {mean_grounding} < 기준 {config.grounding_min} (원문 근거 확인 권장)")
 
-    # 7) Entity 검증·환각(방법론) — output의 핵심 엔티티가 원문에 실재하는지 대조.
+    # 7) Entity 검증·환각(방법론) — output의 핵심 엔티티가 원문에 실재하는지 대조한다.
+    #    대조 대상은 해당 청크가 아니라 '같은 소스 문서 전체'(그 문서의 모든 청크 합집합)로
+    #    한다. 조문 참조가 다른 청크에 있어도 문서엔 존재하므로 환각으로 오탐하지 않는다.
+    corpus = {}
     for r in judged:
-        eg, unsupported = _entity_grounding(r["output"], r["input"])
+        corpus.setdefault(r["source_document"], []).append(r["input"])
+    corpus = {k: " ".join(v) for k, v in corpus.items()}
+    for r in judged:
+        doc = corpus.get(r["source_document"], r["input"])
+        eg, unsupported = _entity_grounding(r["output"], doc)
         r["entity_grounding"] = eg
-        r["hallucinated_entities"] = unsupported  # 원문에 없는 엔티티(환각 의심)
+        r["hallucinated_entities"] = unsupported  # 문서 전체에 없는 엔티티(환각 의심)
     scored = [r for r in judged if r["entity_grounding"] is not None]
     entity_grounding = round(sum(r["entity_grounding"] for r in scored) / len(scored), 3) if scored else None
     halluc_records = sum(1 for r in judged if r["hallucinated_entities"])
     hallucination_rate = round(halluc_records / len(judged) * 100, 1) if judged else 0.0
 
-    # 8) 메타데이터 완전성(방법론 100%)·중복률·최종 등급.
+    # 8) 의미 보존(방법론) — 임베딩 모델이 있고 활성화된 경우에만 표본으로 측정한다.
+    mean_semantic = None
+    if config.semantic_enabled and judged:
+        from . import semantic
+        sims = [s for s in (semantic.semantic_similarity(r["output"], r["input"])
+                            for r in judged[:config.semantic_sample]) if s is not None]
+        mean_semantic = round(sum(sims) / len(sims), 3) if sims else None
+
+    # 9) 메타데이터 완전성(방법론 100%)·중복률·최종 등급.
     dup_rate = round(dup_removed / len(records) * 100, 1) if records else 0.0
     metadata_complete = all(
         r.get("source_document") and r.get("keyword") for r in judged
@@ -127,6 +142,7 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
         "low_grounding": low_grounding,
         "entity_grounding": entity_grounding,
         "hallucination_rate": hallucination_rate,
+        "mean_semantic": mean_semantic,
         "metadata_complete": metadata_complete,
         "issues": issues,
         "records": judged,
