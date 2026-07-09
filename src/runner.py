@@ -125,3 +125,93 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
         "artifacts": artifacts,
         "llm_mode": "ollama" if llm.available() else "mock",
     }
+
+
+def run_many(paths: list, out_dir: str = None, name: str = "법률_통합",
+             on_progress=None, time_budget: float = None) -> dict:
+    # 여러 문서를 하나의 데이터셋으로 통합 생성한다(P1-4 다양성). 문서별로 STEP1~4를
+    # 돌려 레코드를 모은 뒤 전체를 재ID·중복제거·근거성 검증하고 단일 산출물로 낸다.
+    # 소스가 여럿이라 특정 법안 표현 과적합 위험이 준다.
+    out_dir = out_dir or config.output_dir
+    os.makedirs(out_dir, exist_ok=True)
+    llm = LLMClient()
+    budget = time_budget if time_budget is not None else config.llm_time_budget
+
+    all_records, all_rag, sources, all_keywords = [], [], [], []
+    for n, path in enumerate(paths, 1):
+        if on_progress:
+            on_progress({"step": n, "total": len(paths), "stage": f"문서 {n}/{len(paths)} 처리"})
+        text = load_document(path)
+        meta = pipeline.analyze(text, os.path.basename(path), llm)
+        deadline = time.monotonic() + budget if (budget and budget > 0 and llm.available()) else None
+        extracted = pipeline.extract_knowledge(text, meta, llm, deadline=deadline)
+        datasets = pipeline.generate_datasets(text, meta, extracted, llm, deadline=deadline)
+        recs = pipeline.to_records(meta, datasets)
+        all_records.extend(recs)
+        all_rag.extend(datasets["rag"])
+        all_keywords += meta["keywords"]
+        sources.append({"document_name": meta["document_name"], "domain": meta["domain"],
+                        "expert": pipeline.route_expert(meta["domain"]), "records": len(recs)})
+
+    # 문서 간 id 충돌 방지를 위해 통합 후 재부여
+    for i, r in enumerate(all_records):
+        r["id"] = f"{i+1:04d}"
+    combined = {
+        "instruction": [{"instruction": r["instruction"], "input": r["input"],
+                         "output": r["output"], "keyword": r["keyword"]} for r in all_records],
+        "qa": [{"question": r["question"], "answer": r["answer"],
+                "source": r["source_document"], "keyword": r["keyword"]} for r in all_records],
+        "rag": all_rag,
+    }
+    validation = validate.run_validation(combined, pipeline.to_unsloth_formats(combined), all_records)
+    final_records = validation["records"]
+    for i, r in enumerate(final_records):  # 중복 제거 후 재ID
+        r["id"] = f"{i+1:04d}"
+
+    clean = {
+        "instruction": [{"instruction": r["instruction"], "input": r["input"],
+                         "output": r["output"], "keyword": r["keyword"]} for r in final_records],
+        "qa": [{"question": r["question"], "answer": r["answer"],
+                "source": r["source_document"], "keyword": r["keyword"]} for r in final_records],
+        "rag": all_rag,
+    }
+    unsloth = pipeline.to_unsloth_formats(clean)
+
+    prefix = _domain_prefix(name)
+    artifacts = {k: f"{prefix}_{v}" for k, v in {
+        "csv": "dataset.csv", "json": "dataset.json", "metadata": "dataset_metadata.json",
+        "report": "dataset_report.md", "unsloth_raw": "unsloth_raw.jsonl",
+        "unsloth_alpaca": "unsloth_alpaca.jsonl", "unsloth_sharegpt": "unsloth_sharegpt.jsonl",
+        "unsloth_chatml": "unsloth_chatml.jsonl",
+    }.items()}
+    export.write_csv(final_records, os.path.join(out_dir, artifacts["csv"]))
+    export.write_json(final_records, os.path.join(out_dir, artifacts["json"]))
+    export.write_unsloth(unsloth, out_dir, prefix=prefix)
+    export.write_metadata(len(final_records), os.path.join(out_dir, artifacts["metadata"]))
+
+    # 통합 메타로 리포트 작성 + 소스 구성(다양성) 명시
+    combined_meta = {"document_name": f"{len(paths)}개 문서 통합", "domain": "법률",
+                     "purpose": "다중 법안 소스 통합 데이터셋", "keywords": _dedup(all_keywords)[:12]}
+    report_path = os.path.join(out_dir, artifacts["report"])
+    export.write_report(combined_meta, validation, report_path)
+    with open(report_path, "a", encoding="utf-8") as f:
+        f.write("\n## 소스 구성 (다양성)\n")
+        f.write(f"- 소스 문서 수: {len(sources)}\n")
+        for s in sources:
+            f.write(f"- {s['document_name']} — {s['expert']}, {s['records']}행\n")
+
+    return {
+        "sources": sources,
+        "validation": validation,
+        "output_dir": out_dir,
+        "artifacts": artifacts,
+        "llm_mode": "ollama" if llm.available() else "mock",
+    }
+
+
+def _dedup(seq):
+    seen, out = set(), []
+    for x in seq:
+        if x not in seen:
+            seen.add(x); out.append(x)
+    return out
