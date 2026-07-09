@@ -192,12 +192,13 @@ def test_s_entity_grounding_logic():
 # 방법론 검증 지표가 검증 결과·리포트에 반영된다(등급·엔티티근거성·환각·메타데이터)
 def test_s_methodology_metrics(result):
     v = result["validation"]
-    for k in ("grade", "entity_grounding", "hallucination_rate", "duplicate_rate", "metadata_complete"):
+    for k in ("grade", "entity_grounding", "hallucination_rate", "duplicate_rate", "metadata_complete", "mean_semantic"):
         assert k in v
     assert v["grade"] in ("A", "B", "C", "D")
+    assert v["mean_semantic"] is None  # SEMANTIC_ENABLED 미설정 시 미측정
     assert all("hallucinated_entities" in r for r in v["records"])
     report = open(os.path.join(result["output_dir"], result["artifacts"]["report"]), encoding="utf-8").read()
-    assert "방법론 검증" in report and "엔티티 근거성" in report
+    assert "방법론 검증" in report and "엔티티 근거성" in report and "의미 유사도" in report
 
 
 # 청킹: 신구조문대비표의 마커는 제거하되 실질 개정 조문은 살린다 (통째 드롭 금지)

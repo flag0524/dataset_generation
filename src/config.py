@@ -35,5 +35,10 @@ class Config:
     # 근거 미확인으로 플래그한다. LLM이 재진술하므로 완전 일치는 아니며 감사 추적용 신호다.
     grounding_min: float = float(os.getenv("GROUNDING_MIN", "0.25"))
 
+    # 의미 유사도(방법론) 측정 여부·표본 수. 임베딩 모델 로드 비용이 커 기본 OFF이며
+    # SEMANTIC_ENABLED=1로 켠다(망분리 시 SEMANTIC_MODEL을 오프라인 반입해야 동작).
+    semantic_enabled: bool = os.getenv("SEMANTIC_ENABLED", "").lower() in ("1", "true", "yes")
+    semantic_sample: int = int(os.getenv("SEMANTIC_SAMPLE", "30"))
+
 
 config = Config()

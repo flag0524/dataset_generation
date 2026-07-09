@@ -82,6 +82,7 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         "## 방법론 검증 (공공기관 권장 기준)",
         f"- 최종 등급: {validation.get('grade', '-')} (품질 {validation['quality_score']}점 / 90+ A)",
         f"- 엔티티 근거성: {eg if eg is not None else 'N/A'} (기준 0.80)",
+        f"- 의미 유사도: {_ms if (_ms := validation.get('mean_semantic')) is not None else 'N/A (SEMANTIC_ENABLED=1로 측정)'} (기준 0.95)",
         f"- 환각 의심율: {validation.get('hallucination_rate', 0)}% (기준 2% 이하)",
         f"- 중복률: {validation.get('duplicate_rate', 0)}% (기준 3% 이하)",
         f"- 메타데이터 완전성: {'100%' if validation.get('metadata_complete') else '미완'} (기준 100%)",
