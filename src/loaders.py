@@ -1,5 +1,6 @@
 # 다중 포맷 문서를 평문 텍스트로 변환하는 로더 (TRD §3)
 import os
+import re
 from zipfile import BadZipFile
 
 # DOCX/XLSX/PPTX는 모두 ZIP 컨테이너라, 구형 바이너리(.doc/.xls/.ppt)나 손상 파일이면
@@ -198,6 +199,16 @@ def _load_hwp(path):
     )
 
 
+# Tesseract가 한글을 글자 단위로 떼어내며 넣는 공백('건 설 산 업')을 붙인다.
+# 한 글자+공백이 3개 이상 연속되는 구간만 제거하므로, 정상 단어 사이 공백
+# ('검토 보고')이나 2글자 이상 토큰('미지 급')은 건드리지 않는다(오병합 방지).
+_OCR_CHAR_RUN = re.compile(r"(?:[가-힣] ){2,}[가-힣]")
+
+
+def _collapse_ocr_spacing(text: str) -> str:
+    return _OCR_CHAR_RUN.sub(lambda m: m.group().replace(" ", ""), text)
+
+
 def _ocr_image(img):
     # PIL 이미지를 Tesseract(한국어+영어)로 OCR한다. 이미지 파일 로더와 PDF 페이지
     # OCR 폴백이 공유한다. 바이너리 경로는 PATH 또는 TESSERACT_CMD, 언어데이터는
@@ -214,12 +225,13 @@ def _ocr_image(img):
         pytesseract.pytesseract.tesseract_cmd = cmd
 
     try:
-        return pytesseract.image_to_string(img, lang="kor+eng")
+        raw = pytesseract.image_to_string(img, lang="kor+eng")
     except pytesseract.TesseractNotFoundError as e:
         raise ValueError(
             "Tesseract 실행파일을 찾을 수 없습니다. TESSERACT_CMD 환경변수로 "
             "경로를 지정하거나 오프라인 설치하세요."
         ) from e
+    return _collapse_ocr_spacing(raw)
 
 
 def _load_ocr(path):

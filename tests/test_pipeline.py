@@ -1,4 +1,5 @@
 # tests.md 검증 매트릭스를 자동화한 end-to-end 및 단위 테스트
+import json
 import os
 import sys
 
@@ -173,6 +174,31 @@ def test_s_t4_time_budget_bounds_wallclock():
     # 드롭 때문에 레코드는 전체보다 적고(폴백 패딩 없음), 실제 생성된 것만 남는다.
     assert 0 < len(ds["instruction"]) < len(segs) * len(pipeline._TASKS)
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
+
+
+# 근거성(grounding) 흔적: 검증·레코드·JSON 메타데이터에 근거 점수/플래그 저장 (P0-3)
+def test_s_grounding_trace(result):
+    v = result["validation"]
+    assert "mean_grounding" in v and "low_grounding" in v
+    for r in v["records"]:
+        assert 0.0 <= r["grounding"] <= 1.0
+        assert isinstance(r["grounded"], bool)
+    path = os.path.join(result["output_dir"], result["artifacts"]["json"])
+    recs = json.load(open(path, encoding="utf-8"))
+    assert all("grounding" in x["metadata"] and "source_span" in x["metadata"] for x in recs)
+
+
+# 로더: OCR이 넣는 한글 글자사이 공백은 붙이되, 정상 단어 공백은 보존한다 (P0-1)
+def test_s_ocr_spacing_collapse():
+    from src.loaders import _collapse_ocr_spacing
+    # 글자 단위로 떼어진 OCR 출력 → 붙는다
+    assert _collapse_ocr_spacing("건 설 산 업 기 본 법") == "건설산업기본법"
+    # 정상 단어 사이 공백(2글자 이상 토큰)은 보존
+    assert _collapse_ocr_spacing("검토 보고 자료") == "검토 보고 자료"
+    # 2글자 토큰이 섞인 공백은 건드리지 않음(오병합 방지)
+    assert _collapse_ocr_spacing("미지 급") == "미지 급"
+    # 영문·숫자 혼합 보존
+    assert _collapse_ocr_spacing("ABC 2020 검 토") == "ABC 2020 검 토"
 
 
 # 로더: 텍스트 PDF는 OCR을 타지 않고, 이미지(스캔) PDF는 OCR 폴백을 탄다 (회귀)
