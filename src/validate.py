@@ -17,6 +17,36 @@ def _grounding(output: str, source: str) -> float:
     return round(len(ot & _tokens(source)) / len(ot), 3)
 
 
+# 방법론 Entity 검증 — 법률 도메인 핵심 엔티티. output이 만들어낸 사실(조문·금액·날짜·
+# 법령명·기관명)이 원문에 실재하는지 대조해 근거성·환각을 정량화한다(모델 불필요, 망분리 안전).
+_ENTITY_PATTERNS = [
+    re.compile(r"제\s?\d+\s?조(?:의\s?\d+)?(?:제\s?\d+\s?항)?(?:제\s?\d+\s?호)?"),  # 조문
+    re.compile(r"\d[\d,]*\s?[억조천만]*\s?원"),                     # 금액(3천만원·500만원·3억원)
+    re.compile(r"\d{4}\s?\.\s?\d{1,2}\s?\.\s?\d{1,2}"),             # 날짜
+    re.compile(r"「[^」]+」|『[^』]+』"),                            # 법령명
+    re.compile(r"[가-힣]{2,}(?:부장관|위원회|위원장|공단|공사|조합|재단|본부|장관|청장|처)"),  # 기관명
+]
+
+
+def _entities(s: str) -> set:
+    ents = set()
+    for p in _ENTITY_PATTERNS:
+        for m in p.finditer(s or ""):
+            ents.add(re.sub(r"\s+", "", m.group()))
+    return ents
+
+
+def _entity_grounding(output: str, source: str):
+    # output의 핵심 엔티티 중 원문(source)에 실재하는 비율과, 원문에 없는(환각 의심) 엔티티.
+    # 엔티티가 없는 output(일반 설명 등)은 판정에서 제외한다(None 반환).
+    oe = _entities(output)
+    if not oe:
+        return None, []
+    src = re.sub(r"\s+", "", source or "")
+    unsupported = sorted(e for e in oe if e not in src)
+    return round((len(oe) - len(unsupported)) / len(oe), 3), unsupported
+
+
 def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
     issues = []
 
@@ -66,19 +96,52 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
     if judged and mean_grounding < config.grounding_min:
         issues.append(f"경고: 평균 근거성 {mean_grounding} < 기준 {config.grounding_min} (원문 근거 확인 권장)")
 
+    # 7) Entity 검증·환각(방법론) — output의 핵심 엔티티가 원문에 실재하는지 대조.
+    for r in judged:
+        eg, unsupported = _entity_grounding(r["output"], r["input"])
+        r["entity_grounding"] = eg
+        r["hallucinated_entities"] = unsupported  # 원문에 없는 엔티티(환각 의심)
+    scored = [r for r in judged if r["entity_grounding"] is not None]
+    entity_grounding = round(sum(r["entity_grounding"] for r in scored) / len(scored), 3) if scored else None
+    halluc_records = sum(1 for r in judged if r["hallucinated_entities"])
+    hallucination_rate = round(halluc_records / len(judged) * 100, 1) if judged else 0.0
+
+    # 8) 메타데이터 완전성(방법론 100%)·중복률·최종 등급.
+    dup_rate = round(dup_removed / len(records) * 100, 1) if records else 0.0
+    metadata_complete = all(
+        r.get("source_document") and r.get("keyword") for r in judged
+    ) if judged else False
+    grade = _grade(quality_score)
+
     return {
         "quality_score": quality_score,
         "status": status,
+        "grade": grade,
         "row_count": len(judged),
         "duplicates_removed": dup_removed,
+        "duplicate_rate": dup_rate,
         "quality_filtered": quality_filtered,
         "format_consistent": format_ok,
         "size_ok": size_ok,
         "mean_grounding": mean_grounding,
         "low_grounding": low_grounding,
+        "entity_grounding": entity_grounding,
+        "hallucination_rate": hallucination_rate,
+        "metadata_complete": metadata_complete,
         "issues": issues,
         "records": judged,
     }
+
+
+def _grade(score: int) -> str:
+    # 방법론 최종 품질 등급: 90+ A, 80+ B, 70+ C, 그 외 D.
+    if score >= 90:
+        return "A"
+    if score >= 80:
+        return "B"
+    if score >= 70:
+        return "C"
+    return "D"
 
 
 def _check_roles(unsloth: dict) -> bool:

@@ -176,6 +176,30 @@ def test_s_t4_time_budget_bounds_wallclock():
     assert all(schemas.validate_instruction(d) for d in ds["instruction"])
 
 
+# 방법론 Entity 검증: output의 핵심 엔티티(조문·금액)가 원문에 실재하는지 대조
+def test_s_entity_grounding_logic():
+    from src.validate import _entity_grounding, _entities
+    src = "제57조의3 및 제96조에 따라 3천만원 이하의 벌금에 처한다."
+    assert "제57조의3" in _entities(src) and "3천만원" in _entities(src)
+    # 원문 엔티티를 보존한 output → 근거성 1.0, 환각 없음
+    eg, unsup = _entity_grounding("제57조의3 위반 시 3천만원 이하 벌금이 부과된다", src)
+    assert eg == 1.0 and unsup == []
+    # 원문에 없는 조문을 지어낸 output → 환각 의심 엔티티로 잡힘
+    eg2, unsup2 = _entity_grounding("제99조에 따라 처벌한다", src)
+    assert "제99조" in unsup2
+
+
+# 방법론 검증 지표가 검증 결과·리포트에 반영된다(등급·엔티티근거성·환각·메타데이터)
+def test_s_methodology_metrics(result):
+    v = result["validation"]
+    for k in ("grade", "entity_grounding", "hallucination_rate", "duplicate_rate", "metadata_complete"):
+        assert k in v
+    assert v["grade"] in ("A", "B", "C", "D")
+    assert all("hallucinated_entities" in r for r in v["records"])
+    report = open(os.path.join(result["output_dir"], result["artifacts"]["report"]), encoding="utf-8").read()
+    assert "방법론 검증" in report and "엔티티 근거성" in report
+
+
 # 청킹: 신구조문대비표의 마커는 제거하되 실질 개정 조문은 살린다 (통째 드롭 금지)
 def test_s_amendment_table_keeps_substance():
     para = ("제14조의2(공무원 등에 대한 교육의 실시) ① 중앙행정기관의 장, 지방자치단체의 장은 "
