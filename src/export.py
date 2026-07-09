@@ -30,6 +30,9 @@ def write_json(records: list, path: str):
             # 근거성 흔적: output이 원문(input)에 근거하는 정도와 플래그(감사 추적용).
             "grounding": r.get("grounding"),
             "grounded": r.get("grounded"),
+            # 방법론 Entity 검증: 엔티티 근거성과 원문에 없는(환각 의심) 엔티티.
+            "entity_grounding": r.get("entity_grounding"),
+            "hallucinated_entities": r.get("hallucinated_entities", []),
             "source_span": r["input"],  # 근거 원문 구간(해당 청크)
         },
     } for r in records]
@@ -69,8 +72,19 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 품질 필터링: {validation['quality_filtered']}",
         f"- 포맷 일관성: {validation['format_consistent']}",
         f"- 크기 기준 충족: {validation['size_ok']}",
-        f"- 평균 근거성: {validation.get('mean_grounding', 0)}",
+        f"- 평균 근거성(어휘): {validation.get('mean_grounding', 0)}",
         f"- 저근거 레코드: {validation.get('low_grounding', 0)}건",
+    ]
+    # 방법론(DocumentAI 검증방법론) 공공기관 권장 기준 대비.
+    eg = validation.get("entity_grounding")
+    lines += [
+        "",
+        "## 방법론 검증 (공공기관 권장 기준)",
+        f"- 최종 등급: {validation.get('grade', '-')} (품질 {validation['quality_score']}점 / 90+ A)",
+        f"- 엔티티 근거성: {eg if eg is not None else 'N/A'} (기준 0.80)",
+        f"- 환각 의심율: {validation.get('hallucination_rate', 0)}% (기준 2% 이하)",
+        f"- 중복률: {validation.get('duplicate_rate', 0)}% (기준 3% 이하)",
+        f"- 메타데이터 완전성: {'100%' if validation.get('metadata_complete') else '미완'} (기준 100%)",
     ]
     if validation["issues"]:
         lines += ["", "## 이슈"] + [f"- {i}" for i in validation["issues"]]
