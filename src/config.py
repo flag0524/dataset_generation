@@ -40,5 +40,12 @@ class Config:
     semantic_enabled: bool = os.getenv("SEMANTIC_ENABLED", "").lower() in ("1", "true", "yes")
     semantic_sample: int = int(os.getenv("SEMANTIC_SAMPLE", "30"))
 
+    # Human Review 표본 비율(방법론 5~10%). 위험도(환각·저근거) 높은 레코드 우선 선정.
+    human_review_rate: float = float(os.getenv("HUMAN_REVIEW_RATE", "0.1"))
+
+    # RAGAS 스타일 자동평가(LLM 심판) 여부·표본. 비용이 커 기본 OFF(RAGAS_ENABLED=1).
+    ragas_enabled: bool = os.getenv("RAGAS_ENABLED", "").lower() in ("1", "true", "yes")
+    ragas_sample: int = int(os.getenv("RAGAS_SAMPLE", "15"))
+
 
 config = Config()

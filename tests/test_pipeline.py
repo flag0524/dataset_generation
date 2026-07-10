@@ -189,6 +189,27 @@ def test_s_entity_grounding_logic():
     assert "제99조" in unsup2
 
 
+# Human Review 샘플링(방법론 5~10%): 위험도 우선 선정 + 검수 CSV 산출
+def test_s_review_risk_priority():
+    from src.validate import _review_sample
+    recs = [
+        {"id": "1", "grounded": True, "entity_grounding": 1.0, "grounding": 0.9, "hallucinated_entities": []},
+        {"id": "2", "grounded": False, "entity_grounding": 0.2, "grounding": 0.1, "hallucinated_entities": ["제99조"]},
+        {"id": "3", "grounded": True, "entity_grounding": 0.8, "grounding": 0.5, "hallucinated_entities": []},
+    ]
+    assert _review_sample(recs, 0.34)[0]["id"] == "2"  # 환각 의심이 최우선
+
+
+def test_s_human_review_export(result):
+    import csv as _csv
+    v = result["validation"]
+    assert "review_ids" in v and len(v["review_ids"]) >= 1
+    path = os.path.join(result["output_dir"], result["artifacts"]["human_review"])
+    rows = list(_csv.DictReader(open(path, encoding="utf-8-sig")))
+    assert len(rows) == len(v["review_ids"])
+    assert "review_result" in rows[0] and "hallucinated_entities" in rows[0]
+
+
 # 방법론 검증 지표가 검증 결과·리포트에 반영된다(등급·엔티티근거성·환각·메타데이터)
 def test_s_methodology_metrics(result):
     v = result["validation"]

@@ -46,6 +46,36 @@ def write_unsloth(unsloth: dict, out_dir: str, prefix: str = ""):
         _dump_jsonl(rows, os.path.join(out_dir, f"{head}unsloth_{name}.jsonl"))
 
 
+# Human Review(방법론 5~10% 샘플 검수) 산출 컬럼. 검수자가 판정·비고를 채운다.
+_REVIEW_COLUMNS = [
+    "id", "source_document", "question", "output",
+    "grounding", "entity_grounding", "hallucinated_entities",
+    "review_result", "review_note",
+]
+
+
+def write_human_review(records: list, review_ids: list, path: str):
+    # review_ids에 해당하는 레코드만 검수용 CSV로 낸다(위험도 우선 선정은 validate에서).
+    idset = set(review_ids)
+    sample = [r for r in records if r["id"] in idset]
+    with open(path, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=_REVIEW_COLUMNS)
+        w.writeheader()
+        for r in sample:
+            w.writerow({
+                "id": r["id"],
+                "source_document": r.get("source_document", ""),
+                "question": r.get("question", ""),
+                "output": r.get("output", ""),
+                "grounding": r.get("grounding", ""),
+                "entity_grounding": r.get("entity_grounding", ""),
+                "hallucinated_entities": ", ".join(r.get("hallucinated_entities", [])),
+                "review_result": "",  # 검수자: pass / fail
+                "review_note": "",
+            })
+    return len(sample)
+
+
 def write_metadata(record_count: int, path: str):
     _dump({
         "version": "1.0",
@@ -86,7 +116,14 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 환각 의심율: {validation.get('hallucination_rate', 0)}% (기준 2% 이하)",
         f"- 중복률: {validation.get('duplicate_rate', 0)}% (기준 3% 이하)",
         f"- 메타데이터 완전성: {'100%' if validation.get('metadata_complete') else '미완'} (기준 100%)",
+        f"- Human Review 표본: {len(validation.get('review_ids', []))}건 (위험도 우선)",
     ]
+    _rg = validation.get("ragas")
+    if _rg:
+        lines.append(
+            f"- RAGAS(LLM 심판, n={_rg['sampled']}): "
+            f"faithfulness {_rg['faithfulness']} · answer_relevancy {_rg['answer_relevancy']}"
+        )
     if validation["issues"]:
         lines += ["", "## 이슈"] + [f"- {i}" for i in validation["issues"]]
     with open(path, "w", encoding="utf-8") as f:

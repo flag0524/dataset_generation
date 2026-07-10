@@ -47,7 +47,7 @@ def _entity_grounding(output: str, source: str):
     return round((len(oe) - len(unsupported)) / len(oe), 3), unsupported
 
 
-def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
+def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> dict:
     issues = []
 
     # 1) Validator — 스키마/구조 무효 행 제외
@@ -121,12 +121,19 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
                             for r in judged[:config.semantic_sample]) if s is not None]
         mean_semantic = round(sum(sims) / len(sims), 3) if sims else None
 
-    # 9) 메타데이터 완전성(방법론 100%)·중복률·최종 등급.
+    # 9) RAGAS 스타일 자동평가(LLM 심판) — faithfulness(원문 근거)·answer_relevancy(질문 적합).
+    #    라이브러리 대신 로컬 LLM으로 핵심 지표만 계산한다(옵인·표본).
+    ragas = None
+    if config.ragas_enabled and judged and llm is not None and llm.available():
+        ragas = _ragas_scores(judged[:config.ragas_sample], llm)
+
+    # 10) 메타데이터 완전성(방법론 100%)·중복률·최종 등급·Human Review 표본.
     dup_rate = round(dup_removed / len(records) * 100, 1) if records else 0.0
     metadata_complete = all(
         r.get("source_document") and r.get("keyword") for r in judged
     ) if judged else False
     grade = _grade(quality_score)
+    review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
 
     return {
         "quality_score": quality_score,
@@ -143,10 +150,63 @@ def run_validation(datasets: dict, unsloth: dict, records: list) -> dict:
         "entity_grounding": entity_grounding,
         "hallucination_rate": hallucination_rate,
         "mean_semantic": mean_semantic,
+        "ragas": ragas,
         "metadata_complete": metadata_complete,
+        "review_ids": review_ids,
         "issues": issues,
         "records": judged,
     }
+
+
+def _ragas_scores(records: list, llm) -> dict:
+    # RAGAS 스타일 지표를 로컬 LLM 심판으로 계산한다(라이브러리 미사용). 표본별로
+    # faithfulness(답이 원문 근거에 부합하는가)·answer_relevancy(답이 질문에 맞는가)를
+    # 0~1로 받아 평균낸다. 파싱 실패 표본은 제외한다.
+    faith, rel = [], []
+    for r in records:
+        data = llm.generate_json(
+            "아래 [근거]에 비추어 [답변]을 평가하라. 0.0~1.0 실수로만 채점한다.\n"
+            "- faithfulness: 답변 내용이 근거에서 뒷받침되는 정도(환각이면 낮게)\n"
+            "- answer_relevancy: 답변이 질문에 적절히 답하는 정도\n"
+            '반드시 JSON만: {"faithfulness":0.0,"answer_relevancy":0.0}\n\n'
+            f"[질문]\n{r.get('question','')}\n\n[근거]\n{r['input']}\n\n[답변]\n{r['output']}",
+            system="너는 엄격한 데이터셋 품질 평가자다. 근거에 없으면 낮게 준다.",
+        )
+        if not isinstance(data, dict):
+            continue
+        try:
+            f = float(data.get("faithfulness"))
+            a = float(data.get("answer_relevancy"))
+        except (TypeError, ValueError):
+            continue
+        faith.append(max(0.0, min(1.0, f)))
+        rel.append(max(0.0, min(1.0, a)))
+    if not faith:
+        return None
+    return {
+        "faithfulness": round(sum(faith) / len(faith), 3),
+        "answer_relevancy": round(sum(rel) / len(rel), 3),
+        "sampled": len(faith),
+    }
+
+
+def _review_sample(records: list, rate: float) -> list:
+    # Human Review 표본(방법론 5~10%). 위험도 높은 레코드를 우선 선정한다:
+    # 환각 의심 > 저근거 > 낮은 엔티티 근거성 > 낮은 어휘 근거성.
+    if not records:
+        return []
+    target = max(1, round(len(records) * rate))
+
+    def risk(r):
+        eg = r.get("entity_grounding")
+        return (
+            1 if r.get("hallucinated_entities") else 0,
+            0 if r.get("grounded", True) else 1,
+            1 - (eg if eg is not None else 1.0),
+            1 - (r.get("grounding") or 0.0),
+        )
+
+    return sorted(records, key=risk, reverse=True)[:target]
 
 
 def _grade(score: int) -> str:
