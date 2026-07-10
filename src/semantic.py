@@ -15,8 +15,9 @@ def _get_model():
     try:
         import torch
         from transformers import AutoModel, AutoTokenizer
-        name = os.getenv("SEMANTIC_MODEL",
-                         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+        # 한국어 특화 모델(ko-sroberta)이 한국어 법률 문장에서 다국어 MiniLM보다
+        # 판별력이 좋다(실측 패러프레이즈 0.88 vs 무관 0.13). 망분리 시 오프라인 반입.
+        name = os.getenv("SEMANTIC_MODEL", "jhgan/ko-sroberta-multitask")
         tok = AutoTokenizer.from_pretrained(name)
         mdl = AutoModel.from_pretrained(name)
         mdl.eval()
