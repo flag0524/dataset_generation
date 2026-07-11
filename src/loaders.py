@@ -107,7 +107,55 @@ def _load_pdf(path):
     sparse = [i for i, t in enumerate(pages) if len(t) < _PDF_OCR_MIN_CHARS]
     if sparse:
         pages = _ocr_pdf_pages(path, pages, sparse)
+    # 신구조문 대비표(2단) 페이지는 pypdf가 두 열을 지그재그로 읽어 조문이 뒤섞인다
+    # (환각·저근거의 직접 원인). 좌표 기반으로 현행/개정안 열을 분리해 재구성한다.
+    pages = _reextract_amendment_tables(path, pages)
     return "\n".join(pages)
+
+
+def _looks_like_amendment_table(text: str) -> bool:
+    # pypdf가 뽑은 페이지 텍스트가 신구조문 대비표인지 판별(오탐 방지 — 표지 의안번호
+    # 박스 등은 제외). '대비표' 또는 '현 행'+'개 정 안' 헤더가 함께 있으면 대비표로 본다.
+    return "대비표" in text or (
+        bool(re.search(r"현\s*행", text)) and bool(re.search(r"개\s*정\s*안", text))
+    )
+
+
+def _column_text(words) -> str:
+    # 단어들을 대략적 줄(top 5pt 버킷) 단위로 묶고 각 줄을 x0 순으로 정렬해 읽기 순서를
+    # 복원한다. 한 열 안에서만 정렬하므로 두 열이 뒤섞이지 않는다.
+    lines = {}
+    for w in words:
+        lines.setdefault(round(w["top"] / 5), []).append(w)
+    out = []
+    for top in sorted(lines):
+        out.extend(w["text"] for w in sorted(lines[top], key=lambda z: z["x0"]))
+    return " ".join(out)
+
+
+def _reextract_amendment_tables(path, pages):
+    # 대비표 페이지를 좌표 기반(레이아웃 인식)으로 재추출해 현행/개정안 열을 분리한다.
+    # pdfplumber 미설치(망분리)·파서 오류 시 기존 pypdf 텍스트를 그대로 유지한다.
+    try:
+        import pdfplumber
+    except ModuleNotFoundError:
+        return pages
+    try:
+        with pdfplumber.open(path) as pdf:
+            for i, page in enumerate(pdf.pages):
+                if i >= len(pages) or not _looks_like_amendment_table(pages[i]):
+                    continue
+                mid = page.width / 2
+                words = page.extract_words()
+                left = _column_text([w for w in words if w["x0"] < mid])
+                right = _column_text([w for w in words if w["x0"] >= mid])
+                if left or right:
+                    # 현행/개정안을 문단으로 분리(지그재그 제거). 이후 파이프라인이
+                    # 대비표 마커((생 략)·----)를 제거하고 실질 개정 조문을 살린다.
+                    pages[i] = f"{left}\n\n{right}"
+    except Exception:
+        return pages
+    return pages
 
 
 def _ocr_pdf_pages(path, pages, sparse):
