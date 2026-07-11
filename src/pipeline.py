@@ -114,11 +114,53 @@ def analyze(text: str, document_name: str, llm: LLMClient) -> dict:
     domain = _classify_domain(text, llm)
     keywords = _top_keywords(text)
     purpose = _segments(text)[0] if _segments(text) else ""
-    return {
+    meta = {
         "document_name": document_name,
         "domain": domain,
         "purpose": purpose[:120],
         "keywords": keywords,
+    }
+    meta.update(_bill_meta(text))
+    return meta
+
+
+def _assembly_term(y: int, m: int, d: int):
+    # 발의일로 국회 대수를 추정한다(20대 2016.5.30~, 21대 2020.5.30~, 22대 2024.5.30~).
+    from datetime import date
+    try:
+        dt = date(y, m, d)
+    except ValueError:
+        return None
+    if dt >= date(2024, 5, 30):
+        return "22대"
+    if dt >= date(2020, 5, 30):
+        return "21대"
+    if dt >= date(2016, 5, 30):
+        return "20대"
+    return None
+
+
+def _bill_meta(text: str) -> dict:
+    # 법안 최신성 대응(보고서 §4): 의안번호·발의일·대수를 원문에서 추출하고, 처리 상태는
+    # 자동 확정 불가라 config 기본값(미확인)을 쓴다. 발의안이면 현행법 오인 방지 고지를 붙인다.
+    is_bill = bool(re.search(r"(개정|제정|폐지)법률안", text))
+    num = re.search(r"의\s*안\s*번\s*호[\s:]*([\d]{4,7})", text) or re.search(r"제\s*([\d]{4,7})\s*호", text)
+    dm = re.search(r"발의연월일[\s:]*(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})", text) \
+        or re.search(r"(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})", text)
+    bill_number = num.group(1) if num else None
+    propose_date = term = None
+    if dm:
+        y, mo, d = int(dm.group(1)), int(dm.group(2)), int(dm.group(3))
+        propose_date = f"{y}.{mo}.{d}"
+        term = _assembly_term(y, mo, d)
+    notice = "본 데이터는 '발의안(개정법률안)' 기준이며 현행법이 아닙니다. 처리 상태·법령 최신성은 의안정보시스템에서 확인하십시오." if is_bill else None
+    return {
+        "is_bill": is_bill,
+        "bill_number": bill_number,
+        "propose_date": propose_date,
+        "assembly_term": term,
+        "bill_status": config.bill_status if is_bill else None,
+        "currency_notice": notice,
     }
 
 
@@ -296,15 +338,20 @@ _TASKS = [
     ("다음 내용을 핵심만 한 문장으로 요약하라.", "summarize"),
     ("다음 내용에서 '조건 → 처리' 형태의 업무 처리 기준을 도출하라.", "rule"),
     ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
+    ("다음 내용의 처리 절차를 단계별로 정리하라.", "procedure"),
+    ("다음 내용이 적용되는 구체적 사례나 상황을 제시하라.", "example"),
+    ("다음 내용에서 현행과 개정(또는 전후)의 차이를 비교하라.", "compare"),
 ]
 
-# 과제 앵글별 데이터 성격(category). 전부 'knowledge'로 뭉뚱그리지 않고 실제 성격을 반영한다:
-# 설명=지식전달, 요약, 처리규칙, 용어정의.
+# 과제 앵글별 데이터 성격(category). 전부 'knowledge'로 뭉뚱그리지 않고 실제 성격을 반영한다.
 _CATEGORY = {
     "explain": "knowledge",
     "summarize": "summary",
     "rule": "rule",
     "terms": "terminology",
+    "procedure": "procedure",
+    "example": "example",
+    "compare": "comparison",
 }
 
 # 앵글별 LLM 질문 생성 실패 시 쓰는 일반 질문(원문 절단이 아니라 안전한 고정 문구).
@@ -313,6 +360,9 @@ _GENERIC_Q = {
     "summarize": "이 내용의 핵심을 요약하면 무엇인가요?",
     "rule": "이 내용에 적용되는 업무 처리 기준은 무엇인가요?",
     "terms": "이 내용의 핵심 용어와 의미는 무엇인가요?",
+    "procedure": "이 내용의 처리 절차는 어떻게 되나요?",
+    "example": "이 내용이 적용되는 사례는 무엇인가요?",
+    "compare": "이 내용에서 현행과 개정의 차이는 무엇인가요?",
 }
 
 
@@ -329,7 +379,7 @@ def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=
     if not use_llm:
         return {}
     data = llm.generate_json(
-        "다음 내용을 바탕으로 네 가지 과제의 질문(q)과 답변(a)을 만들어라.\n"
+        "다음 내용을 바탕으로 일곱 가지 과제의 질문(q)과 답변(a)을 만들어라.\n"
         "답변(a)은 원문을 통째로 베끼지는 말되, 원문의 핵심 용어·수치·금액·기간·조문 번호\n"
         "(예: 제57조의3)·기관명은 반드시 그대로 유지하라(사실 근거 보존). 문장 표현만 새로 쓴다.\n"
         "질문(q)은 원문을 자르지 말고 완결된 자연스러운 한국어 의문문으로 작성하라.\n"
@@ -337,9 +387,13 @@ def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=
         "- summarize: 한 문장 요약\n"
         "- rule: '조건 → 처리' 형태의 업무 기준 한 문장\n"
         "- terms: 핵심 용어 2~3개와 각 의미\n"
+        "- procedure: 처리 절차를 단계별로\n"
+        "- example: 적용되는 구체적 사례나 상황\n"
+        "- compare: 현행과 개정(또는 전후)의 차이 비교. 해당 없으면 빈 문자열\n"
         "- keywords: 이 내용의 핵심 키워드 2~3개(명사) 배열\n"
         '반드시 JSON만 출력하라: {"explain":{"q":"","a":""},"summarize":{"q":"","a":""},'
-        '"rule":{"q":"","a":""},"terms":{"q":"","a":""},"keywords":["",""]}\n\n'
+        '"rule":{"q":"","a":""},"terms":{"q":"","a":""},"procedure":{"q":"","a":""},'
+        '"example":{"q":"","a":""},"compare":{"q":"","a":""},"keywords":["",""]}\n\n'
         f"내용:\n{seg}",
         system=f"너는 {expert}다. 한국어로 간결·정확하게 답하되 원문의 사실(용어·수치·조문)을 보존하라.",
         timeout=timeout,
@@ -369,6 +423,9 @@ def _mock_derive(seg: str, meta: dict, expert: str) -> dict:
         "summarize": f"[mock] 요약하면, 본문은 '{seg[:40]}' 등을 다루는 내용이다.",
         "rule": f"[mock] 처리 기준: '{seg[:40]}' 상황에서 {expert}가 정해진 절차를 적용한다.",
         "terms": f"[mock] 핵심 용어는 {kw}이며, 본문은 이를 중심으로 기술되어 있다.",
+        "procedure": f"[mock] 처리 절차: '{seg[:40]}'를 접수·검토·처리 순으로 진행한다.",
+        "example": f"[mock] 적용 사례: '{seg[:40]}'가 문제되는 상황에 이 내용이 적용된다.",
+        "compare": f"[mock] 현행과 달리 개정으로 '{seg[:40]}' 부분이 바뀐다.",
     }
     angles = {k: {"q": _GENERIC_Q[k], "a": v} for k, v in a.items()}
     return {"angles": angles, "keywords": _top_keywords(seg, n=3)}
@@ -465,5 +522,10 @@ def to_records(meta: dict, datasets: dict) -> list:
             "source_document": meta["document_name"],
             "keyword": inst.get("keyword", meta["keywords"][:3]),  # 레코드(청크) 단위 키워드
             "created_date": today,
+            # 법안 최신성 메타(발의안 오인 방지). 문서별 값이라 레코드에 싣는다(다중소스 대응).
+            "bill_number": meta.get("bill_number"),
+            "assembly_term": meta.get("assembly_term"),
+            "bill_status": meta.get("bill_status"),
+            "currency_notice": meta.get("currency_notice"),
         })
     return records

@@ -34,6 +34,11 @@ def write_json(records: list, path: str):
             "entity_grounding": r.get("entity_grounding"),
             "hallucinated_entities": r.get("hallucinated_entities", []),
             "source_span": r["input"],  # 근거 원문 구간(해당 청크)
+            # 법안 최신성(발의안 오인 방지).
+            "bill_number": r.get("bill_number"),
+            "assembly_term": r.get("assembly_term"),
+            "bill_status": r.get("bill_status"),
+            "currency_notice": r.get("currency_notice"),
         },
     } for r in records]
     _dump(out, path)
@@ -117,6 +122,7 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 환각 의심율: {validation.get('hallucination_rate', 0)}% (기준 2% 이하)",
         f"- 중복률: {validation.get('duplicate_rate', 0)}% (기준 3% 이하)",
         f"- 메타데이터 완전성: {'100%' if validation.get('metadata_complete') else '미완'} (기준 100%)",
+        f"- 초단답(30자 미만): {validation.get('short_answer_count', 0)}건 (검수 권장)",
         f"- Human Review 표본: {len(validation.get('review_ids', []))}건 (위험도 우선)",
     ]
     _rg = validation.get("ragas")
@@ -125,6 +131,15 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
             f"- RAGAS(LLM 심판, n={_rg['sampled']}): "
             f"faithfulness {_rg['faithfulness']} · answer_relevancy {_rg['answer_relevancy']}"
         )
+    # 법안 최신성(보고서 §4) — 발의안을 현행법으로 오인하지 않도록 명시.
+    if meta.get("is_bill"):
+        lines += [
+            "",
+            "## 법안 최신성 (주의)",
+            f"- 의안번호: {meta.get('bill_number') or '미상'} / 발의일: {meta.get('propose_date') or '미상'} / {meta.get('assembly_term') or '대수 미상'}",
+            f"- 처리 상태: {meta.get('bill_status')} (의안정보시스템 likms.assembly.go.kr에서 확인 필요)",
+            f"- {meta.get('currency_notice')}",
+        ]
     if validation["issues"]:
         lines += ["", "## 이슈"] + [f"- {i}" for i in validation["issues"]]
     with open(path, "w", encoding="utf-8") as f:
