@@ -9,6 +9,21 @@ def _tokens(s: str) -> set:
     return set(re.findall(r"[가-힣A-Za-z]{2,}", s or ""))
 
 
+# 부정 의미 표지(법령의 금지·의무 배제). input엔 있는데 output에서 사라지면 의미가
+# 뒤집힐 위험(예: '하여서는 아니 된다' → '해야 한다')이 있어 검수 대상으로 표시한다.
+_NEGATION = re.compile(
+    r"아니\s*(?:된|한|하|할|함|됨)"      # 아니 된다/아니한다/아니하다 (법령 금지구)
+    r"|않(?:는|고|아|으|은|을|던)"        # 하지 않는다/않고
+    r"|없(?:다|이|는|어|음|을|던)"        # 수 없다/없이
+    r"|하지\s*못|하지\s*아니"            # 하지 못한다/하지 아니하다
+    r"|해서는\s*안|하여서는\s*안"        # 해서는 안 된다
+    r"|말아야|금지|불가")
+
+
+def _has_negation(s: str) -> bool:
+    return bool(_NEGATION.search(s or ""))
+
+
 def _grounding(output: str, source: str) -> float:
     # output이 원문(source=input 청크)의 어휘를 얼마나 공유하는지(0~1). 근거성 신호.
     ot = _tokens(output)
@@ -148,11 +163,15 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         r.get("source_document") and r.get("keyword") for r in judged
     ) if judged else False
     grade = _grade(quality_score)
-    review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
-    # 초단답(30자 미만) 플래그(보고서 #3) — 드롭하지 않고 검수 대상으로 표시한다.
+    # 레코드별 검수 플래그를 먼저 세팅한 뒤 Human Review 표본을 뽑는다(플래그가 위험도에 반영).
+    # 초단답(30자 미만, 보고서 #3)·부정문 의미반전 위험(보고서 #4): 드롭하지 않고 검수 대상 표시.
     for r in judged:
         r["short_answer"] = len(r["output"]) < 30
+        # input엔 부정 표지가 있는데 output엔 사라진 경우만(의미 뒤집힘 위험 방향) 플래그.
+        r["negation_mismatch"] = _has_negation(r["input"]) and not _has_negation(r["output"])
     short_answer_count = sum(1 for r in judged if r["short_answer"])
+    negation_mismatch_count = sum(1 for r in judged if r["negation_mismatch"])
+    review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
     category_dist = {}
     for r in judged:
         c = r.get("category", "knowledge")
@@ -178,6 +197,7 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "review_ids": review_ids,
         "category_dist": category_dist,
         "short_answer_count": short_answer_count,
+        "negation_mismatch_count": negation_mismatch_count,
         "issues": issues,
         "records": judged,
     }
@@ -217,7 +237,7 @@ def _ragas_scores(records: list, llm) -> dict:
 
 def _review_sample(records: list, rate: float) -> list:
     # Human Review 표본(방법론 5~10%). 위험도 높은 레코드를 우선 선정한다:
-    # 환각 의심 > 저근거 > 낮은 엔티티 근거성 > 낮은 어휘 근거성.
+    # 환각 의심 > 부정문 의미반전 위험 > 저근거 > 낮은 엔티티 근거성 > 낮은 어휘 근거성.
     if not records:
         return []
     target = max(1, round(len(records) * rate))
@@ -226,6 +246,7 @@ def _review_sample(records: list, rate: float) -> list:
         eg = r.get("entity_grounding")
         return (
             1 if r.get("hallucinated_entities") else 0,
+            1 if r.get("negation_mismatch") else 0,
             0 if r.get("grounded", True) else 1,
             1 - (eg if eg is not None else 1.0),
             1 - (r.get("grounding") or 0.0),
