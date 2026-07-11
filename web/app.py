@@ -36,6 +36,13 @@ def generate_page():
         return f.read()
 
 
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_page():
+    # no-store로 서빙해 UI 갱신이 브라우저 캐시에 막히지 않게 한다(/static 정적 서빙은 캐시됨).
+    with open(os.path.join(STATIC_DIR, "dashboard.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read(), headers={"Cache-Control": "no-store"})
+
+
 def _fix_filename(name: str) -> str:
     # Starlette는 multipart 파일명을 latin-1로 디코드한다. 한글 파일명은 원래 바이트가
     # latin-1 문자열로 깨져 들어오므로 latin-1로 되돌린 뒤 실제 인코딩으로 디코드한다.
@@ -114,9 +121,13 @@ def history():
                 line = line.strip()
                 if line:
                     try:
-                        runs.append(json.loads(line))
+                        rec = json.loads(line)
                     except json.JSONDecodeError:
                         continue
+                    # 인코딩 수정 이전에 깨진 채 저장된 옛 이력의 파일명을 읽을 때 복원한다.
+                    if rec.get("document_name"):
+                        rec["document_name"] = _fix_filename(rec["document_name"])
+                    runs.append(rec)
     runs.reverse()  # 최신 먼저
 
     total = len(runs)
