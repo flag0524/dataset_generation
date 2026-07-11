@@ -189,13 +189,36 @@ def test_s_entity_grounding_logic():
     assert "제99조" in unsup2
 
 
+# 법안 최신성(보고서 §4): 의안번호·발의일·대수 추출과 발의안 disclaimer
+def test_s_bill_metadata():
+    from src import pipeline
+    text = ("건설산업기본법 일부개정법률안\n의 안 번 호 24590\n발의연월일 : 2020. 2. 7.\n"
+            "발 의 자 : 홍길동의원 등\n제57조의3을 신설한다.")
+    m = pipeline._bill_meta(text)
+    assert m["is_bill"] is True
+    assert m["bill_number"] == "24590"
+    assert m["propose_date"] == "2020.2.7"
+    assert m["assembly_term"] == "20대"  # 2020.2.7은 20대(21대는 2020.5.30~)
+    assert "현행법이 아닙니다" in m["currency_notice"]
+    # 일반 문서는 법안 아님
+    assert pipeline._bill_meta("일반 민원 처리 매뉴얼입니다.")["is_bill"] is False
+
+
+# 과제 앵글 확장(보고서 #6): 절차·사례·비교형이 추가되어 category가 다양해진다
+def test_s_expanded_angles():
+    from src import pipeline
+    kinds = {k for _, k in pipeline._TASKS}
+    assert {"procedure", "example", "compare"} <= kinds  # 4→7 확장
+    assert all(k in pipeline._CATEGORY and k in pipeline._GENERIC_Q for k in kinds)
+
+
 # category: 앵글별 실제 데이터 성격을 반영한다(전부 'knowledge' 하드코딩 금지)
 def test_s_category_reflects_task(result):
     recs = result["datasets"]["instruction"]
     cats = {r["category"] for r in recs}
-    # 4개 앵글이 서로 다른 category로 분화됨
-    assert {"knowledge", "summary", "rule", "terminology"} & cats
-    assert cats <= {"knowledge", "summary", "rule", "terminology"}
+    valid = {"knowledge", "summary", "rule", "terminology", "procedure", "example", "comparison"}
+    assert {"knowledge", "summary", "rule"} & cats  # 앵글별 분화 확인
+    assert cats <= valid
     # JSON 산출물에도 다양한 category가 실림
     path = os.path.join(result["output_dir"], result["artifacts"]["json"])
     jcats = {x["category"] for x in json.load(open(path, encoding="utf-8"))}

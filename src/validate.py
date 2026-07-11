@@ -134,6 +134,10 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     ) if judged else False
     grade = _grade(quality_score)
     review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
+    # 초단답(30자 미만) 플래그(보고서 #3) — 드롭하지 않고 검수 대상으로 표시한다.
+    for r in judged:
+        r["short_answer"] = len(r["output"]) < 30
+    short_answer_count = sum(1 for r in judged if r["short_answer"])
     category_dist = {}
     for r in judged:
         c = r.get("category", "knowledge")
@@ -158,6 +162,7 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "metadata_complete": metadata_complete,
         "review_ids": review_ids,
         "category_dist": category_dist,
+        "short_answer_count": short_answer_count,
         "issues": issues,
         "records": judged,
     }

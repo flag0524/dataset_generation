@@ -43,6 +43,10 @@ class Config:
     # Human Review 표본 비율(방법론 5~10%). 위험도(환각·저근거) 높은 레코드 우선 선정.
     human_review_rate: float = float(os.getenv("HUMAN_REVIEW_RATE", "0.1"))
 
+    # 법안 처리 상태(계류/폐기/가결). 원문·자동조회로 확정 불가하므로 기본 '미확인'이며,
+    # 의안정보시스템 확인 후 BILL_STATUS로 설정한다. 발의안을 현행법으로 오인하지 않게 함.
+    bill_status: str = os.getenv("BILL_STATUS", "미확인")
+
     # RAGAS 스타일 자동평가(LLM 심판) 여부·표본. 비용이 커 기본 OFF(RAGAS_ENABLED=1).
     ragas_enabled: bool = os.getenv("RAGAS_ENABLED", "").lower() in ("1", "true", "yes")
     ragas_sample: int = int(os.getenv("RAGAS_SAMPLE", "15"))
