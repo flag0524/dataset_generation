@@ -139,6 +139,19 @@ def test_t6_no_synthetic_padding(result):
     assert v["row_count"] <= len(segs) * len(pipeline._TASKS)
 
 
+# 크기 게이트: 소스 여력(세그먼트×앵글)이 권장치보다 작으면 '경고' 대신 '안내'만 낸다.
+def test_s_size_gate_adaptive_for_small_source():
+    from src import validate
+    # 세그먼트 2개짜리 작은 소스 → 상한 2×7=14 < 100. 경고가 아니라 안내여야 한다.
+    recs = [{"id": i, "question": f"q{i}", "answer": "가나다라마바사아자차카타파하" * 2,
+             "output": "가나다라마바사아자차카타파하" * 2,
+             "input": f"세그먼트{i % 2}", "source_document": "small.pdf",
+             "keyword": ["법률"], "category": "knowledge"} for i in range(6)]
+    v = validate.run_validation({"instruction": [], "qa": [], "rag": []}, {}, recs)
+    joined = " ".join(v["issues"])
+    assert "안내" in joined and "경고: 행 수" not in joined
+
+
 # 응답 시간 게이트: 느린 LLM이라도 시간 예산이 벽시계를 유계로 만든다 (회귀)
 def test_s_t4_time_budget_bounds_wallclock():
     import time

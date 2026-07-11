@@ -72,11 +72,26 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         issues.append("ChatML/ShareGPT 역할 태깅 교대 불일치")
 
     # 4) 크기 기준 — 합성 패딩을 제거했으므로 소스가 작으면 행 수가 적을 수 있다.
-    #    크기 미달은 PASS를 막는 하드 게이트가 아니라 경고로 둔다(해법은 소스 확대).
+    #    고정 100은 작은 단일 문서(예: 의안원문 11세그먼트)에 항상 거짓 경고를 낸다.
+    #    소스가 낼 수 있는 상한(distinct 세그먼트 × 과제 앵글) 대비로 판단한다:
+    #    상한이 권장치보다 작으면 소스가 작은 것이므로 '안내'(문서 결합 권장)로만 남기고,
+    #    상한은 충분한데 생성이 저조할 때만 실제 '경고'로 올린다(생성 누락 신호).
+    from .pipeline import _TASKS
     row_count = len(deduped)
-    size_ok = row_count >= config.min_rows
-    if not size_ok:
-        issues.append(f"경고: 행 수 {row_count} < 권장 최소 {config.min_rows} (소스 문서 확대 권장)")
+    segments = len({r["input"] for r in deduped})
+    angles = max(1, len(_TASKS))
+    capacity = segments * angles
+    size_ok = row_count >= min(config.min_rows, capacity)
+    if row_count < config.min_rows:
+        if capacity < config.min_rows:
+            issues.append(
+                f"안내: 행 수 {row_count} — 소스가 작습니다(세그먼트 {segments}개, 상한 {capacity}행). "
+                f"권장 {config.min_rows}행 도달하려면 관련 문서를 함께 넣어(예: 의안원문+검토보고서) 생성하십시오."
+            )
+        else:
+            issues.append(
+                f"경고: 행 수 {row_count} < 권장 {config.min_rows} (소스 여력 {capacity}행, 생성 누락 점검)"
+            )
 
     # 5) LLM Judge (자체 휴리스틱 채점) — 빈 답변·과단문 감점
     judged = [r for r in deduped if len(r["answer"]) >= 8]
