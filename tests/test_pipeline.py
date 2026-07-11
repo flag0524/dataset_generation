@@ -341,6 +341,18 @@ def test_s_negation_mismatch_flag():
     assert "1" in v["review_ids"]  # 위험도 우선으로 검수 표본에 포함
 
 
+# 업로드 파일명 인코딩 복원: latin-1로 깨진 한글 파일명을 UTF-8/CP949로 되살린다
+def test_s_upload_filename_encoding_fix():
+    from web.app import _fix_filename
+    orig = "2024598_의사국 의안과_의안원문.pdf"
+    # 브라우저(UTF-8)·한국어 Windows 셸(CP949)이 보낸 뒤 latin-1로 디코드돼 깨진 상태
+    assert _fix_filename(orig.encode("utf-8").decode("latin-1")) == orig
+    assert _fix_filename(orig.encode("cp949").decode("latin-1")) == orig
+    assert _fix_filename(orig) == orig          # 이미 정상 유니코드는 유지
+    assert _fix_filename("report.pdf") == "report.pdf"  # ASCII 유지
+    assert _fix_filename(None) == "upload"      # 빈 값 방어
+
+
 # 대비표 재추출(보고서 #1): 열 판별과 열 내 읽기순서 복원(단위)
 def test_s_amendment_column_reextract_units():
     from src import loaders
