@@ -40,9 +40,6 @@ class Config:
     semantic_enabled: bool = os.getenv("SEMANTIC_ENABLED", "").lower() in ("1", "true", "yes")
     semantic_sample: int = int(os.getenv("SEMANTIC_SAMPLE", "30"))
 
-    # Human Review 표본 비율(방법론 5~10%). 위험도(환각·저근거) 높은 레코드 우선 선정.
-    human_review_rate: float = float(os.getenv("HUMAN_REVIEW_RATE", "0.1"))
-
     # 법안 처리 상태(계류/폐기/가결). 원문·자동조회로 확정 불가하므로 기본 '미확인'이며,
     # 의안정보시스템 확인 후 BILL_STATUS로 설정한다. 발의안을 현행법으로 오인하지 않게 함.
     bill_status: str = os.getenv("BILL_STATUS", "미확인")
@@ -65,7 +62,6 @@ class Config:
     std_duplicate_max: float = float(os.getenv("STD_DUPLICATE_MAX", "3.0"))
     std_quality: int = int(os.getenv("STD_QUALITY", "90"))
     std_ocr: float = float(os.getenv("STD_OCR", "99.0"))
-    std_human_review: float = float(os.getenv("STD_HUMAN_REVIEW", "95.0"))
 
 
 config = Config()
