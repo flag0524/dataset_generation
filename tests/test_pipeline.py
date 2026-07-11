@@ -271,6 +271,23 @@ def test_s_methodology_metrics(result):
     assert "방법론 검증" in report and "엔티티 근거성" in report and "의미 유사도" in report
 
 
+# 공공기관 권장 기준(방법론 8항목)이 config 기준값으로 리포트에 판정 표시된다
+def test_s_public_standards_table(result):
+    from src.config import config
+    report = open(os.path.join(result["output_dir"], result["artifacts"]["report"]), encoding="utf-8").read()
+    # 8개 항목 전부 표에 존재
+    for item in ("최종 품질", "엔티티 근거성", "의미 유사도", "환각 의심율",
+                 "중복률", "메타데이터 완전성", "Human Review", "OCR 정확도"):
+        assert item in report
+    # 기준값은 config에서 온다(하드코딩 아님) + 판정 열이 렌더된다
+    assert f"{config.std_grounding} 이상" in report
+    assert f"{config.std_semantic} 이상" in report
+    assert f"{config.std_human_review}% 이상" in report
+    assert "기준 충족:" in report and "판정" in report
+    # 측정 불가 항목은 N/A(의미유사도 OFF·Human Review 미완·OCR)
+    assert "N/A" in report
+
+
 # 청킹: 신구조문대비표의 마커는 제거하되 실질 개정 조문은 살린다 (통째 드롭 금지)
 def test_s_amendment_table_keeps_substance():
     para = ("제14조의2(공무원 등에 대한 교육의 실시) ① 중앙행정기관의 장, 지방자치단체의 장은 "
