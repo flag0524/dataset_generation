@@ -51,5 +51,17 @@ class Config:
     ragas_enabled: bool = os.getenv("RAGAS_ENABLED", "").lower() in ("1", "true", "yes")
     ragas_sample: int = int(os.getenv("RAGAS_SAMPLE", "15"))
 
+    # 공공기관 권장 기준(DocumentAI 검증방법론 §공공기관 권장 기준) — 리포트의 기준별
+    # 충족/미달 판정에 쓰는 단일 진입점. env로 조정 가능(기본값은 방법론과 동일).
+    # 주의: std_grounding(0.80)은 '엔티티(사실) 근거성' 기준이며, 어휘 중첩 플래그용
+    # grounding_min(0.25)과 다른 지표다(LLM 재진술이라 어휘 일치는 낮은 게 정상).
+    std_grounding: float = float(os.getenv("STD_GROUNDING", "0.80"))
+    std_semantic: float = float(os.getenv("STD_SEMANTIC", "0.95"))
+    std_hallucination_max: float = float(os.getenv("STD_HALLUCINATION_MAX", "2.0"))
+    std_duplicate_max: float = float(os.getenv("STD_DUPLICATE_MAX", "3.0"))
+    std_quality: int = int(os.getenv("STD_QUALITY", "90"))
+    std_ocr: float = float(os.getenv("STD_OCR", "99.0"))
+    std_human_review: float = float(os.getenv("STD_HUMAN_REVIEW", "95.0"))
+
 
 config = Config()

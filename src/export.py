@@ -3,6 +3,7 @@ import csv
 import json
 import os
 
+from .config import config
 from .schemas import CSV_COLUMNS
 
 
@@ -111,19 +112,46 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 평균 근거성(어휘): {validation.get('mean_grounding', 0)}",
         f"- 저근거 레코드: {validation.get('low_grounding', 0)}건",
     ]
-    # 방법론(DocumentAI 검증방법론) 공공기관 권장 기준 대비.
+    # 방법론(DocumentAI 검증방법론 §공공기관 권장 기준) 8개 항목 대비 판정.
+    # 기준값은 config(단일 진입점)에서 읽고, 각 항목을 충족(✅)/미달(❌)/N/A로 표시한다.
+    # 측정 불가 항목(의미유사도 OFF, Human Review 미완, OCR 입력단계)은 N/A로 둔다.
+    def _mark(ok):
+        return "N/A" if ok is None else ("✅ 충족" if ok else "❌ 미달")
+
     eg = validation.get("entity_grounding")
+    ms = validation.get("mean_semantic")
+    hr = validation.get("hallucination_rate", 0)
+    dr = validation.get("duplicate_rate", 0)
+    score = validation["quality_score"]
+    rows = [
+        ("최종 품질", f"{config.std_quality}점 이상(A)", f"{score}점 ({validation.get('grade', '-')})",
+         score >= config.std_quality),
+        ("엔티티 근거성(Grounding)", f"{config.std_grounding} 이상",
+         f"{eg}" if eg is not None else "N/A(엔티티 없음)", None if eg is None else eg >= config.std_grounding),
+        ("의미 유사도", f"{config.std_semantic} 이상",
+         f"{ms}" if ms is not None else "N/A(SEMANTIC_ENABLED=1로 측정)", None if ms is None else ms >= config.std_semantic),
+        ("환각 의심율", f"{config.std_hallucination_max}% 이하", f"{hr}%", hr <= config.std_hallucination_max),
+        ("중복률", f"{config.std_duplicate_max}% 이하", f"{dr}%", dr <= config.std_duplicate_max),
+        ("메타데이터 완전성", "100%", "100%" if validation.get("metadata_complete") else "미완",
+         bool(validation.get("metadata_complete"))),
+        ("Human Review", f"{config.std_human_review}% 이상",
+         f"표본 {len(validation.get('review_ids', []))}건(검수 미완)", None),
+        ("OCR 정확도", f"{config.std_ocr}% 이상", "입력 단계 기준(런타임 미측정)", None),
+    ]
+    met = sum(1 for *_, ok in rows if ok is True)
+    checkable = sum(1 for *_, ok in rows if ok is not None)
     lines += [
         "",
         "## 방법론 검증 (공공기관 권장 기준)",
-        f"- 최종 등급: {validation.get('grade', '-')} (품질 {validation['quality_score']}점 / 90+ A)",
-        f"- 엔티티 근거성: {eg if eg is not None else 'N/A'} (기준 0.80)",
-        f"- 의미 유사도: {_ms if (_ms := validation.get('mean_semantic')) is not None else 'N/A (SEMANTIC_ENABLED=1로 측정)'} (기준 0.95)",
-        f"- 환각 의심율: {validation.get('hallucination_rate', 0)}% (기준 2% 이하)",
-        f"- 중복률: {validation.get('duplicate_rate', 0)}% (기준 3% 이하)",
-        f"- 메타데이터 완전성: {'100%' if validation.get('metadata_complete') else '미완'} (기준 100%)",
+        f"- 기준 충족: {met}/{checkable} (측정 가능 항목 기준; N/A는 제외)",
+        "",
+        "| 항목 | 기준 | 측정값 | 판정 |",
+        "| --- | --- | --- | --- |",
+    ]
+    lines += [f"| {name} | {std} | {val} | {_mark(ok)} |" for name, std, val, ok in rows]
+    lines += [
+        "",
         f"- 초단답(30자 미만): {validation.get('short_answer_count', 0)}건 (검수 권장)",
-        f"- Human Review 표본: {len(validation.get('review_ids', []))}건 (위험도 우선)",
     ]
     _rg = validation.get("ragas")
     if _rg:
