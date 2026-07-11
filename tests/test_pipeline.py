@@ -238,25 +238,14 @@ def test_s_category_reflects_task(result):
     assert len(jcats) > 1  # 단일 knowledge가 아님
 
 
-# Human Review 샘플링(방법론 5~10%): 위험도 우선 선정 + 검수 CSV 산출
-def test_s_review_risk_priority():
-    from src.validate import _review_sample
-    recs = [
-        {"id": "1", "grounded": True, "entity_grounding": 1.0, "grounding": 0.9, "hallucinated_entities": []},
-        {"id": "2", "grounded": False, "entity_grounding": 0.2, "grounding": 0.1, "hallucinated_entities": ["제99조"]},
-        {"id": "3", "grounded": True, "entity_grounding": 0.8, "grounding": 0.5, "hallucinated_entities": []},
-    ]
-    assert _review_sample(recs, 0.34)[0]["id"] == "2"  # 환각 의심이 최우선
-
-
-def test_s_human_review_export(result):
-    import csv as _csv
+# 휴먼 리뷰 체계 제거: review_ids·human_review 산출물·_review_sample이 없어야 한다
+def test_s_no_human_review_system(result):
+    from src import validate, export
     v = result["validation"]
-    assert "review_ids" in v and len(v["review_ids"]) >= 1
-    path = os.path.join(result["output_dir"], result["artifacts"]["human_review"])
-    rows = list(_csv.DictReader(open(path, encoding="utf-8-sig")))
-    assert len(rows) == len(v["review_ids"])
-    assert "review_result" in rows[0] and "hallucinated_entities" in rows[0]
+    assert "review_ids" not in v
+    assert "human_review" not in result["artifacts"]
+    assert not hasattr(validate, "_review_sample")
+    assert not hasattr(export, "write_human_review")
 
 
 # 방법론 검증 지표가 검증 결과·리포트에 반영된다(등급·엔티티근거성·환각·메타데이터)
@@ -275,16 +264,16 @@ def test_s_methodology_metrics(result):
 def test_s_public_standards_table(result):
     from src.config import config
     report = open(os.path.join(result["output_dir"], result["artifacts"]["report"]), encoding="utf-8").read()
-    # 8개 항목 전부 표에 존재
+    # 항목 전부 표에 존재(Human Review는 체계 제거로 표에서 뺀다)
     for item in ("최종 품질", "엔티티 근거성", "의미 유사도", "환각 의심율",
-                 "중복률", "메타데이터 완전성", "Human Review", "OCR 정확도"):
+                 "중복률", "메타데이터 완전성", "OCR 정확도"):
         assert item in report
+    assert "Human Review" not in report
     # 기준값은 config에서 온다(하드코딩 아님) + 판정 열이 렌더된다
     assert f"{config.std_grounding} 이상" in report
     assert f"{config.std_semantic} 이상" in report
-    assert f"{config.std_human_review}% 이상" in report
     assert "기준 충족:" in report and "판정" in report
-    # 측정 불가 항목은 N/A(의미유사도 OFF·Human Review 미완·OCR)
+    # 측정 불가 항목은 N/A(의미유사도 OFF·OCR)
     assert "N/A" in report
 
 
@@ -313,13 +302,7 @@ def test_s_page_marker_not_leaked():
         assert not re.search(r"(?:^|\s)-\s*\d+\s*-(?=\s|$)", s)  # 중간 '- 5 -' 잔존 금지
 
 
-# Human Review CSV(보고서 #2): 검수자·검수일 필드가 감사 추적용으로 포함된다
-def test_s_human_review_audit_columns():
-    from src import export
-    assert "reviewer" in export._REVIEW_COLUMNS and "review_date" in export._REVIEW_COLUMNS
-
-
-# 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 검수 플래그
+# 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 품질 신호 플래그
 def test_s_negation_mismatch_flag():
     from src import validate
     assert validate._has_negation("그 행위를 하여서는 아니 된다")
@@ -338,7 +321,6 @@ def test_s_negation_mismatch_flag():
     flags = {r["id"]: r["negation_mismatch"] for r in v["records"]}
     assert flags["1"] is True and flags["2"] is False
     assert v["negation_mismatch_count"] == 1
-    assert "1" in v["review_ids"]  # 위험도 우선으로 검수 표본에 포함
 
 
 # 업로드 파일명 인코딩 복원: latin-1로 깨진 한글 파일명을 UTF-8/CP949로 되살린다

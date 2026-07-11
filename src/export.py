@@ -52,39 +52,6 @@ def write_unsloth(unsloth: dict, out_dir: str, prefix: str = ""):
         _dump_jsonl(rows, os.path.join(out_dir, f"{head}unsloth_{name}.jsonl"))
 
 
-# Human Review(방법론 5~10% 샘플 검수) 산출 컬럼. 검수자가 판정·비고·검수자·검수일을
-# 채운다. reviewer/review_date는 검수 수행 후 채우는 빈 칸으로, 공공기관 감사 추적에 쓴다.
-_REVIEW_COLUMNS = [
-    "id", "source_document", "question", "output",
-    "grounding", "entity_grounding", "hallucinated_entities",
-    "review_result", "review_note", "reviewer", "review_date",
-]
-
-
-def write_human_review(records: list, review_ids: list, path: str):
-    # review_ids에 해당하는 레코드만 검수용 CSV로 낸다(위험도 우선 선정은 validate에서).
-    idset = set(review_ids)
-    sample = [r for r in records if r["id"] in idset]
-    with open(path, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=_REVIEW_COLUMNS)
-        w.writeheader()
-        for r in sample:
-            w.writerow({
-                "id": r["id"],
-                "source_document": r.get("source_document", ""),
-                "question": r.get("question", ""),
-                "output": r.get("output", ""),
-                "grounding": r.get("grounding", ""),
-                "entity_grounding": r.get("entity_grounding", ""),
-                "hallucinated_entities": ", ".join(r.get("hallucinated_entities", [])),
-                "review_result": "",  # 검수자: pass / fail
-                "review_note": "",
-                "reviewer": "",       # 검수자 이름/ID (검수 후 기입)
-                "review_date": "",    # 검수일 YYYY-MM-DD (검수 후 기입)
-            })
-    return len(sample)
-
-
 def write_metadata(record_count: int, path: str):
     _dump({
         "version": "1.0",
@@ -117,7 +84,7 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
     ]
     # 방법론(DocumentAI 검증방법론 §공공기관 권장 기준) 8개 항목 대비 판정.
     # 기준값은 config(단일 진입점)에서 읽고, 각 항목을 충족(✅)/미달(❌)/N/A로 표시한다.
-    # 측정 불가 항목(의미유사도 OFF, Human Review 미완, OCR 입력단계)은 N/A로 둔다.
+    # 측정 불가 항목(의미유사도 OFF, OCR 입력단계)은 N/A로 둔다.
     def _mark(ok):
         return "N/A" if ok is None else ("✅ 충족" if ok else "❌ 미달")
 
@@ -137,8 +104,6 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         ("중복률", f"{config.std_duplicate_max}% 이하", f"{dr}%", dr <= config.std_duplicate_max),
         ("메타데이터 완전성", "100%", "100%" if validation.get("metadata_complete") else "미완",
          bool(validation.get("metadata_complete"))),
-        ("Human Review", f"{config.std_human_review}% 이상",
-         f"표본 {len(validation.get('review_ids', []))}건(검수 미완)", None),
         ("OCR 정확도", f"{config.std_ocr}% 이상", "입력 단계 기준(런타임 미측정)", None),
     ]
     met = sum(1 for *_, ok in rows if ok is True)

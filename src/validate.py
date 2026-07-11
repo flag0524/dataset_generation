@@ -157,21 +157,19 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     if config.ragas_enabled and judged and llm is not None and llm.available():
         ragas = _ragas_scores(judged[:config.ragas_sample], llm)
 
-    # 10) 메타데이터 완전성(방법론 100%)·중복률·최종 등급·Human Review 표본.
+    # 10) 메타데이터 완전성(방법론 100%)·중복률·최종 등급·품질 신호 집계.
     dup_rate = round(dup_removed / len(records) * 100, 1) if records else 0.0
     metadata_complete = all(
         r.get("source_document") and r.get("keyword") for r in judged
     ) if judged else False
     grade = _grade(quality_score)
-    # 레코드별 검수 플래그를 먼저 세팅한 뒤 Human Review 표본을 뽑는다(플래그가 위험도에 반영).
-    # 초단답(30자 미만, 보고서 #3)·부정문 의미반전 위험(보고서 #4): 드롭하지 않고 검수 대상 표시.
+    # 품질 신호 플래그(드롭하지 않고 집계만): 초단답(30자 미만), 부정문 의미반전 위험
+    # (input엔 부정 표지가 있는데 output엔 사라져 의미가 뒤집힐 위험 방향).
     for r in judged:
         r["short_answer"] = len(r["output"]) < 30
-        # input엔 부정 표지가 있는데 output엔 사라진 경우만(의미 뒤집힘 위험 방향) 플래그.
         r["negation_mismatch"] = _has_negation(r["input"]) and not _has_negation(r["output"])
     short_answer_count = sum(1 for r in judged if r["short_answer"])
     negation_mismatch_count = sum(1 for r in judged if r["negation_mismatch"])
-    review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
     category_dist = {}
     for r in judged:
         c = r.get("category", "knowledge")
@@ -194,7 +192,6 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "mean_semantic": mean_semantic,
         "ragas": ragas,
         "metadata_complete": metadata_complete,
-        "review_ids": review_ids,
         "category_dist": category_dist,
         "short_answer_count": short_answer_count,
         "negation_mismatch_count": negation_mismatch_count,
@@ -233,26 +230,6 @@ def _ragas_scores(records: list, llm) -> dict:
         "answer_relevancy": round(sum(rel) / len(rel), 3),
         "sampled": len(faith),
     }
-
-
-def _review_sample(records: list, rate: float) -> list:
-    # Human Review 표본(방법론 5~10%). 위험도 높은 레코드를 우선 선정한다:
-    # 환각 의심 > 부정문 의미반전 위험 > 저근거 > 낮은 엔티티 근거성 > 낮은 어휘 근거성.
-    if not records:
-        return []
-    target = max(1, round(len(records) * rate))
-
-    def risk(r):
-        eg = r.get("entity_grounding")
-        return (
-            1 if r.get("hallucinated_entities") else 0,
-            1 if r.get("negation_mismatch") else 0,
-            0 if r.get("grounded", True) else 1,
-            1 - (eg if eg is not None else 1.0),
-            1 - (r.get("grounding") or 0.0),
-        )
-
-    return sorted(records, key=risk, reverse=True)[:target]
 
 
 def _grade(score: int) -> str:

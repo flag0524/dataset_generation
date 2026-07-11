@@ -90,14 +90,11 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
         "unsloth_alpaca": f"{prefix}_unsloth_alpaca.jsonl",
         "unsloth_sharegpt": f"{prefix}_unsloth_sharegpt.jsonl",
         "unsloth_chatml": f"{prefix}_unsloth_chatml.jsonl",
-        "human_review": f"{prefix}_human_review.csv",
     }
     export.write_csv(final_records, os.path.join(out_dir, artifacts["csv"]))
     export.write_json(final_records, os.path.join(out_dir, artifacts["json"]))
     export.write_unsloth(unsloth, out_dir, prefix=prefix)
     export.write_metadata(len(final_records), os.path.join(out_dir, artifacts["metadata"]))
-    export.write_human_review(final_records, validation["review_ids"],
-                              os.path.join(out_dir, artifacts["human_review"]))
     export.write_report(meta, validation, os.path.join(out_dir, artifacts["report"]),
                         extraction_mode=extracted.get("extraction_mode"))
 
@@ -185,14 +182,12 @@ def run_many(paths: list, out_dir: str = None, name: str = "법률_통합",
         "csv": "dataset.csv", "json": "dataset.json", "metadata": "dataset_metadata.json",
         "report": "dataset_report.md", "unsloth_raw": "unsloth_raw.jsonl",
         "unsloth_alpaca": "unsloth_alpaca.jsonl", "unsloth_sharegpt": "unsloth_sharegpt.jsonl",
-        "unsloth_chatml": "unsloth_chatml.jsonl", "human_review": "human_review.csv",
+        "unsloth_chatml": "unsloth_chatml.jsonl",
     }.items()}
     export.write_csv(final_records, os.path.join(out_dir, artifacts["csv"]))
     export.write_json(final_records, os.path.join(out_dir, artifacts["json"]))
     export.write_unsloth(unsloth, out_dir, prefix=prefix)
     export.write_metadata(len(final_records), os.path.join(out_dir, artifacts["metadata"]))
-    export.write_human_review(final_records, validation["review_ids"],
-                              os.path.join(out_dir, artifacts["human_review"]))
 
     # 통합 메타로 리포트 작성 + 소스 구성(다양성) 명시
     combined_meta = {"document_name": f"{len(paths)}개 문서 통합", "domain": "법률",
