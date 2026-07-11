@@ -36,6 +36,25 @@ def generate_page():
         return f.read()
 
 
+def _fix_filename(name: str) -> str:
+    # Starlette는 multipart 파일명을 latin-1로 디코드한다. 한글 파일명은 원래 바이트가
+    # latin-1 문자열로 깨져 들어오므로 latin-1로 되돌린 뒤 실제 인코딩으로 디코드한다.
+    # 클라이언트별로 UTF-8(브라우저)·CP949(한국어 Windows 셸)가 섞이므로 순서대로 시도한다.
+    # 이미 올바른 유니코드(비 latin-1 문자 포함)면 latin-1 인코딩이 실패하니 그대로 둔다.
+    if not name:
+        return "upload"
+    try:
+        raw = name.encode("latin-1")
+    except UnicodeEncodeError:
+        return name
+    for enc in ("utf-8", "cp949"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return name
+
+
 @app.post("/api/generate")
 async def generate(files: List[UploadFile] = File(...), preview: bool = Form(False)):
     # 파일 1개면 단일 생성(run), 여러 개면 통합 생성(run_many). 여러 관련 문서
@@ -44,8 +63,9 @@ async def generate(files: List[UploadFile] = File(...), preview: bool = Form(Fal
     named_paths = []
     try:
         for f in files:
-            # 원본 파일명을 유지해 source_document에 반영(경로 조작 방지 위해 basename만)
-            p = os.path.join(tmpdir, os.path.basename(f.filename or "upload"))
+            # 원본 파일명을 유지해 source_document에 반영(경로 조작 방지 위해 basename만).
+            # multipart 파일명은 Starlette가 latin-1로 디코드해 한글이 깨지므로 UTF-8로 복원한다.
+            p = os.path.join(tmpdir, os.path.basename(_fix_filename(f.filename)))
             with open(p, "wb") as out:
                 out.write(await f.read())
             named_paths.append(p)
