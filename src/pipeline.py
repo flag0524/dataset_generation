@@ -99,11 +99,13 @@ def _segments(text: str):
         if not joined:
             continue
         for s in re.split(r"(?<=[.!?。])\s+", joined):
-            s = s.strip(" -*#\t·")
+            # 페이지 마커('- 1 -')·대비표 마커를 앞머리 cosmetic strip보다 먼저 제거한다.
+            # strip을 먼저 하면 '- 1 -'의 선행 '-'가 떨어져 '1 -'가 되어 페이지마커
+            # 정규식을 회피하고 세그먼트 첫머리에 새어든다(보고서 #3: 헤더·페이지번호 제거).
+            s = _AMENDMENT_STRIP.sub(" ", s).strip(" -*#\t·")
             if _is_noise(s):
                 continue
-            # 대비표 마커·페이지 조각을 제거하고 남은 실질 내용이 충분하면 채택.
-            cleaned = re.sub(r"\s+", " ", _AMENDMENT_STRIP.sub(" ", s)).strip(" ·⋅.")
+            cleaned = re.sub(r"\s+", " ", s).strip(" ·⋅.")
             if len(cleaned) >= config.min_seg_len:
                 segs.append(cleaned)
     return segs

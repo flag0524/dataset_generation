@@ -52,11 +52,12 @@ def write_unsloth(unsloth: dict, out_dir: str, prefix: str = ""):
         _dump_jsonl(rows, os.path.join(out_dir, f"{head}unsloth_{name}.jsonl"))
 
 
-# Human Review(방법론 5~10% 샘플 검수) 산출 컬럼. 검수자가 판정·비고를 채운다.
+# Human Review(방법론 5~10% 샘플 검수) 산출 컬럼. 검수자가 판정·비고·검수자·검수일을
+# 채운다. reviewer/review_date는 검수 수행 후 채우는 빈 칸으로, 공공기관 감사 추적에 쓴다.
 _REVIEW_COLUMNS = [
     "id", "source_document", "question", "output",
     "grounding", "entity_grounding", "hallucinated_entities",
-    "review_result", "review_note",
+    "review_result", "review_note", "reviewer", "review_date",
 ]
 
 
@@ -78,6 +79,8 @@ def write_human_review(records: list, review_ids: list, path: str):
                 "hallucinated_entities": ", ".join(r.get("hallucinated_entities", [])),
                 "review_result": "",  # 검수자: pass / fail
                 "review_note": "",
+                "reviewer": "",       # 검수자 이름/ID (검수 후 기입)
+                "review_date": "",    # 검수일 YYYY-MM-DD (검수 후 기입)
             })
     return len(sample)
 
