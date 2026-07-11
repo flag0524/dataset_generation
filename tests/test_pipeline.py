@@ -302,6 +302,27 @@ def test_s_page_marker_not_leaked():
         assert not re.search(r"(?:^|\s)-\s*\d+\s*-(?=\s|$)", s)  # 중간 '- 5 -' 잔존 금지
 
 
+# 환각 조문 제거(국방 보고서 #3): 원문에 없는 조문을 인용한 레코드는 데이터셋에서 삭제
+def test_s_drop_hallucinated_article():
+    from src import validate
+    src_doc = "제6조에 따라 교육을 실시한다. 제10조의 재단은 사업을 수행한다."
+    recs = [
+        # 원문에 있는 조문 인용 → 유지
+        {"id": "1", "question": "q1", "answer": "제6조에 따라 교육을 실시하도록 규정한다",
+         "output": "제6조에 따라 교육을 실시하도록 규정한다", "input": src_doc,
+         "source_document": "d.pdf", "keyword": ["법률"], "category": "rule"},
+        # 원문에 없는 제99조 인용(환각) → 삭제
+        {"id": "2", "question": "q2", "answer": "제99조에 따라 벌금을 부과하도록 규정한다",
+         "output": "제99조에 따라 벌금을 부과하도록 규정한다", "input": src_doc,
+         "source_document": "d.pdf", "keyword": ["법률"], "category": "rule"},
+    ]
+    v = validate.run_validation({"instruction": [], "qa": [], "rag": []}, {}, recs)
+    ids = {r["id"] for r in v["records"]}
+    assert "2" not in ids and "1" in ids           # 환각 조문 레코드만 삭제
+    assert v["hallucinated_articles_dropped"] == 1
+    assert v["hallucination_rate"] == 0.0           # 정제 후 환각율 0
+
+
 # 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 품질 신호 플래그
 def test_s_negation_mismatch_flag():
     from src import validate

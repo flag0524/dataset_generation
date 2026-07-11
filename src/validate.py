@@ -51,6 +51,14 @@ def _entities(s: str) -> set:
     return ents
 
 
+# 환각 조문 판별: 정규화된 환각 엔티티 중 조문 참조(제N조…)가 있으면 사실 오류로 본다.
+_ARTICLE_RE = re.compile(r"^제\d+조")
+
+
+def _cites_hallucinated_article(r: dict) -> bool:
+    return any(_ARTICLE_RE.match(e) for e in r.get("hallucinated_entities", []))
+
+
 def _entity_grounding(output: str, source: str):
     # output의 핵심 엔티티 중 원문(source)에 실재하는 비율과, 원문에 없는(환각 의심) 엔티티.
     # 엔티티가 없는 output(일반 설명 등)은 판정에서 제외한다(None 반환).
@@ -138,6 +146,13 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         eg, unsupported = _entity_grounding(r["output"], doc)
         r["entity_grounding"] = eg
         r["hallucinated_entities"] = unsupported  # 문서 전체에 없는 엔티티(환각 의심)
+    # 환각 조문 제거(보고서 #3): 원문에 없는 조문(제N조…)을 인용한 레코드는 사실 오류라
+    # 데이터셋에서 뺀다. 이후 지표는 정제된 집합으로 계산한다(옵트아웃 시 플래그만).
+    hallucinated_articles_dropped = 0
+    if config.drop_hallucinated_articles:
+        kept = [r for r in judged if not _cites_hallucinated_article(r)]
+        hallucinated_articles_dropped = len(judged) - len(kept)
+        judged = kept
     scored = [r for r in judged if r["entity_grounding"] is not None]
     entity_grounding = round(sum(r["entity_grounding"] for r in scored) / len(scored), 3) if scored else None
     halluc_records = sum(1 for r in judged if r["hallucinated_entities"])
@@ -189,6 +204,7 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "low_grounding": low_grounding,
         "entity_grounding": entity_grounding,
         "hallucination_rate": hallucination_rate,
+        "hallucinated_articles_dropped": hallucinated_articles_dropped,
         "mean_semantic": mean_semantic,
         "ragas": ragas,
         "metadata_complete": metadata_complete,
