@@ -298,6 +298,27 @@ def test_s_amendment_table_keeps_substance():
     assert "현행과 같음" not in joined and "신 설" not in joined  # 보일러플레이트 제거
 
 
+# OCR 후처리(보고서 #3): 페이지 마커 '- N -'가 앞머리 strip에 깨져 세그먼트에 새지 않는다
+def test_s_page_marker_not_leaked():
+    import re
+    # 페이지 시작('- 1 -')과 페이지 중간('... - 5 - 현행 ...')을 모두 포함
+    text = ("- 1 -\n북한인권법 일부개정법률안은 소속 공무원 및 직원 등에게 "
+            "북한주민의 인권에 관한 교육을 실시하려는 것을 목적으로 한다.\n\n"
+            "교육 실시에 필요한 사항은 대통령령으로 정한다. - 5 - 현 행 개정안 "
+            "제6조의 내용은 통일부장관이 정하는 바에 따라 시행하여야 한다.")
+    segs = pipeline._segments(text)
+    assert segs, "세그먼트가 비면 안 된다"
+    for s in segs:
+        assert not re.match(r"^\d+\s*-", s)                  # 앞머리 '1 -' 잔존 금지
+        assert not re.search(r"(?:^|\s)-\s*\d+\s*-(?=\s|$)", s)  # 중간 '- 5 -' 잔존 금지
+
+
+# Human Review CSV(보고서 #2): 검수자·검수일 필드가 감사 추적용으로 포함된다
+def test_s_human_review_audit_columns():
+    from src import export
+    assert "reviewer" in export._REVIEW_COLUMNS and "review_date" in export._REVIEW_COLUMNS
+
+
 # 도메인 분류 정밀화: LLM 가용 시 문맥 판정을 따르고, 미가용/무효 응답이면 키워드 폴백
 def test_s_domain_llm_two_tier():
     class _Stub:
