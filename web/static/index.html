@@ -163,11 +163,11 @@
         <span class="ico">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
         </span>
-        <span class="lead">파일을 드래그하거나 <strong>클릭하여 선택</strong></span>
+        <span class="lead">파일을 드래그하거나 <strong>클릭하여 선택</strong> <em>(여러 개 가능)</em></span>
         <span class="fname" id="fname" hidden></span>
         <span class="formats">PDF · DOCX · XLSX · PPTX · HWP · TXT · MD · 이미지(OCR)</span>
       </label>
-      <input type="file" id="file" aria-label="문서 파일">
+      <input type="file" id="file" aria-label="문서 파일" multiple>
       <button class="btn" id="run" type="button">
         <span id="btn-label">생성 및 검증</span>
       </button>
@@ -189,19 +189,21 @@ drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("
 fileInput.addEventListener("change", showName);
 
 function showName() {
-  const f = fileInput.files[0], el = $("fname");
-  if (f) { el.textContent = "선택됨: " + f.name; el.hidden = false; } else { el.hidden = true; }
+  const fs = fileInput.files, el = $("fname");
+  if (fs.length === 1) { el.textContent = "선택됨: " + fs[0].name; el.hidden = false; }
+  else if (fs.length > 1) { el.textContent = `선택됨: ${fs.length}개 문서 (통합 생성)`; el.hidden = false; }
+  else { el.hidden = true; }
 }
 
 $("run").onclick = async () => {
-  const f = fileInput.files[0];
-  if (!f) { drop.classList.add("drag"); setTimeout(() => drop.classList.remove("drag"), 600); return; }
+  const fs = fileInput.files;
+  if (!fs.length) { drop.classList.add("drag"); setTimeout(() => drop.classList.remove("drag"), 600); return; }
   const btn = $("run");
   btn.disabled = true;
   $("btn-label").textContent = "처리 중...";
   btn.insertAdjacentHTML("afterbegin", '<span class="spinner" id="sp" aria-hidden="true"></span>');
   try {
-    const fd = new FormData(); fd.append("file", f);
+    const fd = new FormData(); for (const f of fs) fd.append("files", f);
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || ("서버 오류 " + res.status));
