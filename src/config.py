@@ -40,6 +40,10 @@ class Config:
     semantic_enabled: bool = os.getenv("SEMANTIC_ENABLED", "").lower() in ("1", "true", "yes")
     semantic_sample: int = int(os.getenv("SEMANTIC_SAMPLE", "30"))
 
+    # 환각 조문 제거(국방 보고서 #3). output이 원문에 없는 조문(제N조…)을 인용한 레코드는
+    # 사실 오류이므로 데이터셋에서 제거한다. false로 두면 플래그만 하고 남긴다.
+    drop_hallucinated_articles: bool = os.getenv("DROP_HALLUCINATED_ARTICLES", "true") != "false"
+
     # 법안 처리 상태(계류/폐기/가결). 원문·자동조회로 확정 불가하므로 기본 '미확인'이며,
     # 의안정보시스템 확인 후 BILL_STATUS로 설정한다. 발의안을 현행법으로 오인하지 않게 함.
     bill_status: str = os.getenv("BILL_STATUS", "미확인")

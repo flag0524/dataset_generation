@@ -119,6 +119,8 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
     lines += [f"| {name} | {std} | {val} | {_mark(ok)} |" for name, std, val, ok in rows]
     lines += [
         "",
+        f"- 환각 조문 제거: {validation.get('hallucinated_articles_dropped', 0)}건 "
+        "(원문에 없는 조문 인용 레코드 삭제)",
         f"- 초단답(30자 미만): {validation.get('short_answer_count', 0)}건 (검수 권장)",
         f"- 부정문 의미반전 위험: {validation.get('negation_mismatch_count', 0)}건 "
         "(원문 부정어가 답변에서 사라짐 — 검수 우선)",
