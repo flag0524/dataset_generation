@@ -319,6 +319,28 @@ def test_s_human_review_audit_columns():
     assert "reviewer" in export._REVIEW_COLUMNS and "review_date" in export._REVIEW_COLUMNS
 
 
+# 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 검수 플래그
+def test_s_negation_mismatch_flag():
+    from src import validate
+    assert validate._has_negation("그 행위를 하여서는 아니 된다")
+    assert not validate._has_negation("교육을 실시하여야 한다")
+    recs = [
+        # input엔 '아니 된다'(금지), output은 긍정으로 뒤집음 → 플래그
+        {"id": "1", "question": "q1", "answer": "설치할 수 있다고 규정한다",
+         "output": "설치할 수 있다고 규정한다", "input": "누구든지 시설을 설치하여서는 아니 된다",
+         "source_document": "d.pdf", "keyword": ["법률"], "category": "rule"},
+        # 부정어가 양쪽에 유지 → 플래그 아님
+        {"id": "2", "question": "q2", "answer": "설치할 수 없다고 규정한다",
+         "output": "설치할 수 없다고 규정한다", "input": "누구든지 시설을 설치하여서는 아니 된다",
+         "source_document": "d.pdf", "keyword": ["법률"], "category": "rule"},
+    ]
+    v = validate.run_validation({"instruction": [], "qa": [], "rag": []}, {}, recs)
+    flags = {r["id"]: r["negation_mismatch"] for r in v["records"]}
+    assert flags["1"] is True and flags["2"] is False
+    assert v["negation_mismatch_count"] == 1
+    assert "1" in v["review_ids"]  # 위험도 우선으로 검수 표본에 포함
+
+
 # 대비표 재추출(보고서 #1): 열 판별과 열 내 읽기순서 복원(단위)
 def test_s_amendment_column_reextract_units():
     from src import loaders
