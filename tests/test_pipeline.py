@@ -319,6 +319,33 @@ def test_s_human_review_audit_columns():
     assert "reviewer" in export._REVIEW_COLUMNS and "review_date" in export._REVIEW_COLUMNS
 
 
+# 대비표 재추출(보고서 #1): 열 판별과 열 내 읽기순서 복원(단위)
+def test_s_amendment_column_reextract_units():
+    from src import loaders
+    assert loaders._looks_like_amendment_table("신·구조문대비표 현 행 개 정 안")
+    assert loaders._looks_like_amendment_table("현  행 ... 개 정 안 ...")
+    assert not loaders._looks_like_amendment_table("의 안 번 호 24598 발의연월일")  # 표지 박스
+    # 좌표 단어를 줄(top)·열(x0) 순으로 재정렬 — 한 열 안에서만 정렬
+    words = [
+        {"text": "B", "x0": 50, "top": 10}, {"text": "A", "x0": 10, "top": 10},
+        {"text": "C", "x0": 10, "top": 30},
+    ]
+    assert loaders._column_text(words) == "A B C"
+
+
+# 대비표 재추출 통합: 표본 PDF에서 현행/개정안 열이 뒤섞이지 않는다(조문 헤더 중복 없음)
+def test_s_amendment_no_column_interleave():
+    import re
+    pdf = os.path.join(os.path.dirname(SAMPLE), "2024598_의사국 의안과_의안원문.pdf")
+    if not os.path.exists(pdf):
+        pytest.skip("표본 PDF 없음")
+    from src.loaders import load_document
+    segs = pipeline._segments(load_document(pdf))
+    # 뒤섞임 신호: 같은 조문 헤더가 한 세그먼트에 2회 이상 나타나면 열이 지그재그로 읽힌 것
+    for s in segs:
+        assert len(re.findall(r"제10조\(북한인권재단", s)) < 2
+
+
 # 도메인 분류 정밀화: LLM 가용 시 문맥 판정을 따르고, 미가용/무효 응답이면 키워드 폴백
 def test_s_domain_llm_two_tier():
     class _Stub:
