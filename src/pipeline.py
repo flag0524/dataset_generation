@@ -298,6 +298,15 @@ _TASKS = [
     ("다음 내용의 핵심 용어와 의미를 정리하라.", "terms"),
 ]
 
+# 과제 앵글별 데이터 성격(category). 전부 'knowledge'로 뭉뚱그리지 않고 실제 성격을 반영한다:
+# 설명=지식전달, 요약, 처리규칙, 용어정의.
+_CATEGORY = {
+    "explain": "knowledge",
+    "summarize": "summary",
+    "rule": "rule",
+    "terms": "terminology",
+}
+
 # 앵글별 LLM 질문 생성 실패 시 쓰는 일반 질문(원문 절단이 아니라 안전한 고정 문구).
 _GENERIC_Q = {
     "explain": "이 내용을 업무 담당자가 이해하도록 설명해 주세요.",
@@ -404,6 +413,7 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
                 "input": seg,
                 "output": item["a"],
                 "keyword": chunk_kw,
+                "category": _CATEGORY[kind],  # 앵글별 데이터 성격
             })
             qas.append({"question": item["q"], "answer": item["a"], "source": src, "keyword": chunk_kw})
     return {"instruction": instructions, "qa": qas, "rag": rags}
@@ -446,7 +456,7 @@ def to_records(meta: dict, datasets: dict) -> list:
         records.append({
             "id": f"{i+1:04d}",
             "domain": meta["domain"],
-            "category": "knowledge",
+            "category": inst.get("category", "knowledge"),  # 앵글별 성격(설명/요약/규칙/용어)
             "question": qa["question"],
             "answer": qa["answer"],
             "instruction": inst["instruction"],

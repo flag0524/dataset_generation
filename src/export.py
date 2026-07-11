@@ -102,6 +102,7 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 품질 필터링: {validation['quality_filtered']}",
         f"- 포맷 일관성: {validation['format_consistent']}",
         f"- 크기 기준 충족: {validation['size_ok']}",
+        f"- category 분포: {', '.join(f'{k} {v}' for k, v in validation.get('category_dist', {}).items()) or '-'}",
         f"- 평균 근거성(어휘): {validation.get('mean_grounding', 0)}",
         f"- 저근거 레코드: {validation.get('low_grounding', 0)}건",
     ]

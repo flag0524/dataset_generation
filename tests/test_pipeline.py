@@ -189,6 +189,19 @@ def test_s_entity_grounding_logic():
     assert "제99조" in unsup2
 
 
+# category: 앵글별 실제 데이터 성격을 반영한다(전부 'knowledge' 하드코딩 금지)
+def test_s_category_reflects_task(result):
+    recs = result["datasets"]["instruction"]
+    cats = {r["category"] for r in recs}
+    # 4개 앵글이 서로 다른 category로 분화됨
+    assert {"knowledge", "summary", "rule", "terminology"} & cats
+    assert cats <= {"knowledge", "summary", "rule", "terminology"}
+    # JSON 산출물에도 다양한 category가 실림
+    path = os.path.join(result["output_dir"], result["artifacts"]["json"])
+    jcats = {x["category"] for x in json.load(open(path, encoding="utf-8"))}
+    assert len(jcats) > 1  # 단일 knowledge가 아님
+
+
 # Human Review 샘플링(방법론 5~10%): 위험도 우선 선정 + 검수 CSV 산출
 def test_s_review_risk_priority():
     from src.validate import _review_sample

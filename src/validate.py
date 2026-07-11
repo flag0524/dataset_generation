@@ -134,6 +134,10 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     ) if judged else False
     grade = _grade(quality_score)
     review_ids = [r["id"] for r in _review_sample(judged, config.human_review_rate)]
+    category_dist = {}
+    for r in judged:
+        c = r.get("category", "knowledge")
+        category_dist[c] = category_dist.get(c, 0) + 1
 
     return {
         "quality_score": quality_score,
@@ -153,6 +157,7 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "ragas": ragas,
         "metadata_complete": metadata_complete,
         "review_ids": review_ids,
+        "category_dist": category_dist,
         "issues": issues,
         "records": judged,
     }
