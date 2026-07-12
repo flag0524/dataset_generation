@@ -113,9 +113,10 @@ def test_s_keyword_per_record(result):
 
 # T5 Export
 def test_t5_csv_columns(result):
+    import csv as _csv
     path = os.path.join(result["output_dir"], result["artifacts"]["csv"])
-    with open(path, encoding="utf-8-sig") as f:
-        header = f.readline().strip().split(",")
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        header = next(_csv.reader(f))  # QUOTE_ALL 인용을 csv 모듈이 정상 파싱
     assert header == schemas.CSV_COLUMNS  # T5-1
 
 
@@ -225,6 +226,26 @@ def test_s_expanded_angles():
     assert all(k in pipeline._CATEGORY and k in pipeline._GENERIC_Q for k in kinds)
 
 
+# category 라우팅: 절차·비교형 앵글은 세그먼트가 그 성격을 담을 때만 적용된다(환각 방지)
+def test_s_angle_routing():
+    from src import pipeline
+    # 규범·정의형 세그먼트: 절차/비교 앵글 배제, 설명/용어 등은 유지
+    norm = "제99조(과태료) 다음 각 호의 어느 하나에 해당하는 자에게는 500만원 이하의 과태료를 부과한다"
+    assert not pipeline._angle_applies("procedure", norm)
+    assert not pipeline._angle_applies("compare", norm)
+    assert pipeline._angle_applies("explain", norm)
+    assert pipeline._angle_applies("terms", norm)
+    # 위임 조항의 '절차'라는 낱말만으로는 절차형으로 보지 않는다
+    deleg = "제1항에 따른 확인에 대한 절차, 방법 등은 대통령령으로 정한다"
+    assert not pipeline._angle_applies("procedure", deleg)
+    # 개정문(신설/전단 중 …으로 하고)은 비교형이 적용된다
+    rev = '제34조제4항 전단 중 "고용하는 등"을 "고용 또는 건설기계를 대여하는 등"으로 하고, 제10항을 신설한다'
+    assert pipeline._angle_applies("compare", rev)
+    # 실제 단계·기한 서술은 절차형이 적용된다
+    proc = "선급금을 받은 날부터 15일 이내에 하수급인에게 선급금을 지급하여야 한다"
+    assert pipeline._angle_applies("procedure", proc)
+
+
 # category: 앵글별 실제 데이터 성격을 반영한다(전부 'knowledge' 하드코딩 금지)
 def test_s_category_reflects_task(result):
     recs = result["datasets"]["instruction"]
@@ -324,6 +345,26 @@ def test_s_drop_hallucinated_article():
 
 
 # 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 품질 신호 플래그
+# write_csv: 백슬래시 리터럴 보존(이스케이프 금지) + QUOTE_ALL + UTF-8 BOM
+def test_s_write_csv_preserves_backslash(tmp_path):
+    from src import export
+    path = str(tmp_path / "out.csv")
+    rec = {c: "" for c in schemas.CSV_COLUMNS}
+    rec.update({"id": "0001", "output": "확인 $\\rightarrow$ 처리", "keyword": ["법률"]})
+    export.write_csv([rec], path)
+    raw = open(path, "rb").read()
+    assert raw[:3] == b"\xef\xbb\xbf"                 # UTF-8 BOM
+    assert b"$\\rightarrow$" in raw                    # 리터럴 백슬래시 그대로(5C 72)
+    assert b"$\\\\rightarrow$" not in raw              # 이중이스케이프 아님
+    import csv as _csv
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        rows = list(_csv.reader(f))
+    assert rows[1][0].startswith('0001') or rows[1][0] == "0001"  # QUOTE_ALL로 읽어도 원문 왕복
+    with open(path, encoding="utf-8-sig") as f:
+        body = f.read()
+    assert '"id"' in body and '"output"' in body       # 헤더도 전부 인용(QUOTE_ALL)
+
+
 def test_s_negation_mismatch_flag():
     from src import validate
     assert validate._has_negation("그 행위를 하여서는 아니 된다")

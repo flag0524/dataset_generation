@@ -8,8 +8,11 @@ from .schemas import CSV_COLUMNS
 
 
 def write_csv(records: list, path: str):
+    # UTF-8 BOM(Excel 한글 호환) + 전 필드 QUOTE_ALL. escapechar를 두지 않아(기본값)
+    # 백슬래시는 이스케이프하지 않고 문자열 그대로 보존한다(예: LaTeX $\rightarrow$).
+    # 따옴표만 doublequote로 처리하므로 값이 원문 그대로 왕복(round-trip)된다.
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS, quoting=csv.QUOTE_ALL)
         w.writeheader()
         for r in records:
             row = dict(r)
