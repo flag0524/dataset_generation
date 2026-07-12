@@ -345,6 +345,19 @@ def test_s_drop_hallucinated_article():
 
 
 # 부정문 의미반전(보고서 #4): input의 부정어가 output에서 사라지면 품질 신호 플래그
+# 발주 주체 정규화: 원문에 없는 '발주처'류를 표준 용어 '발주자'로 교체(원문 용어는 보존)
+def test_s_normalize_orderer():
+    src = "국가, 지방자치단체 또는 공공기관이 발주하는 공사의 수급인"
+    # 원문에 없는 '발주처/발주기관/발주청' → '발주자'
+    assert pipeline._normalize_orderer("발주처가 공공기관인 경우", src) == "발주자가 공공기관인 경우"
+    assert pipeline._normalize_orderer("발주기관 및 발주청 확인", src) == "발주자 및 발주자 확인"
+    # 원문이 실제로 '발주처'를 쓰면 건드리지 않는다(원문 충실성)
+    assert pipeline._normalize_orderer("발주처 확인", "발주처가 정한다") == "발주처 확인"
+    # 정규화 후 '발주처'는 환각 엔티티로 잡히지 않는다
+    from src.validate import _entities
+    assert "발주처" not in _entities(pipeline._normalize_orderer("발주처가 발주한다", src))
+
+
 # write_csv: 백슬래시 리터럴 보존(이스케이프 금지) + QUOTE_ALL + UTF-8 BOM
 def test_s_write_csv_preserves_backslash(tmp_path):
     from src import export
