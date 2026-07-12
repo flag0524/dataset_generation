@@ -386,6 +386,19 @@ def _angle_applies(kind: str, seg: str) -> bool:
     return True
 
 
+# 발주 주체 용어 정규화 — LLM이 원문에 없는 '발주처/발주기관/발주청'을 만들어내면(환각 기관명)
+# 건설·조달 법령의 표준 용어 '발주자'로 교체한다. 단, 원문 세그먼트가 그 변형을 실제로 쓰면
+# 정당한 원문 용어이므로 건드리지 않는다(원문 충실성 우선).
+_ORDERER_VARIANTS = ("발주처", "발주기관", "발주청")
+
+
+def _normalize_orderer(text: str, source: str) -> str:
+    for v in _ORDERER_VARIANTS:
+        if v in text and v not in source:
+            text = text.replace(v, "발주자")
+    return text
+
+
 def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=None) -> dict:
     # 한 세그먼트에서 앵글별 (질문 q, 답변 a)과 청크 키워드를 LLM 1회 호출로 얻는다.
     # 반환: {"angles": {kind: {"q":.., "a":..}}, "keywords": [..]} — a가 15자 이상인
@@ -488,14 +501,17 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
             # category 라우팅: 세그먼트가 그 앵글의 성격을 담지 않으면 레코드로 만들지 않는다.
             if not _angle_applies(kind, seg):
                 continue
+            # 발주 주체 용어 정규화: 원문에 없는 '발주처/발주기관/발주청'을 표준 용어 '발주자'로
+            # 교체(환각 기관명 방지). 원문 세그먼트가 그 표현을 실제로 쓰면 건드리지 않는다.
+            answer = _normalize_orderer(item["a"], seg)
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
                 "input": seg,
-                "output": item["a"],
+                "output": answer,
                 "keyword": chunk_kw,
                 "category": _CATEGORY[kind],  # 앵글별 데이터 성격
             })
-            qas.append({"question": item["q"], "answer": item["a"], "source": src, "keyword": chunk_kw})
+            qas.append({"question": item["q"], "answer": answer, "source": src, "keyword": chunk_kw})
     return {"instruction": instructions, "qa": qas, "rag": rags}
 
 
