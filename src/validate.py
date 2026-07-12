@@ -123,10 +123,16 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     quality_score = _score(judged, format_ok)
     status = "PASS" if quality_score >= config.quality_pass_score else "FAIL"
 
-    # 6) 근거성(grounding) — 각 레코드 output이 원문(input)에 근거하는지 점수·플래그로
-    #    레코드에 저장한다(감사 추적성). 법률 도메인은 오답 비용이 커 저근거를 명시적으로 표시.
+    # 6) 근거성(grounding) — 각 레코드 output이 '같은 소스 문서 전체'에 근거하는지 점수·
+    #    플래그로 저장한다. 대조를 청크가 아닌 문서 전체로 하는 이유는 엔티티 검증과 동일하다:
+    #    output의 근거가 다른 청크에 있어도 문서엔 존재하므로 저근거로 오탐하지 않는다(보고서 #1).
+    corpus = {}
     for r in judged:
-        g = _grounding(r["output"], r["input"])
+        corpus.setdefault(r["source_document"], []).append(r["input"])
+    corpus = {k: " ".join(v) for k, v in corpus.items()}
+    for r in judged:
+        doc = corpus.get(r["source_document"], r["input"])
+        g = _grounding(r["output"], doc)
         r["grounding"] = g
         r["grounded"] = g >= config.grounding_min
     mean_grounding = round(sum(r["grounding"] for r in judged) / len(judged), 3) if judged else 0.0
@@ -134,17 +140,15 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     if judged and mean_grounding < config.grounding_min:
         issues.append(f"경고: 평균 근거성 {mean_grounding} < 기준 {config.grounding_min} (원문 근거 확인 권장)")
 
-    # 7) Entity 검증·환각(방법론) — output의 핵심 엔티티가 원문에 실재하는지 대조한다.
-    #    대조 대상은 해당 청크가 아니라 '같은 소스 문서 전체'(그 문서의 모든 청크 합집합)로
-    #    한다. 조문 참조가 다른 청크에 있어도 문서엔 존재하므로 환각으로 오탐하지 않는다.
-    corpus = {}
-    for r in judged:
-        corpus.setdefault(r["source_document"], []).append(r["input"])
-    corpus = {k: " ".join(v) for k, v in corpus.items()}
+    # 7) Entity 검증·환각(방법론) — output의 핵심 엔티티가 문서 전체에 실재하는지 대조한다.
+    #    엔티티가 없는 output(일반 설명 등)은 대조할 엔티티가 없어 값이 null이 된다. 메타데이터
+    #    완전성(보고서 #4)을 위해 이런 레코드의 entity_grounding 필드는 문서 단위 어휘 근거성으로
+    #    채우되, 표준 통계(평균)는 실제 엔티티가 있는 레코드(_eg_raw)로만 낸다(지표 의미 보존).
     for r in judged:
         doc = corpus.get(r["source_document"], r["input"])
         eg, unsupported = _entity_grounding(r["output"], doc)
-        r["entity_grounding"] = eg
+        r["_eg_raw"] = eg  # 통계용: 엔티티 없으면 None
+        r["entity_grounding"] = eg if eg is not None else r["grounding"]  # 필드: null 대신 어휘 폴백
         r["hallucinated_entities"] = unsupported  # 문서 전체에 없는 엔티티(환각 의심)
     # 환각 조문 제거(보고서 #3): 원문에 없는 조문(제N조…)을 인용한 레코드는 사실 오류라
     # 데이터셋에서 뺀다. 이후 지표는 정제된 집합으로 계산한다(옵트아웃 시 플래그만).
@@ -153,8 +157,10 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         kept = [r for r in judged if not _cites_hallucinated_article(r)]
         hallucinated_articles_dropped = len(judged) - len(kept)
         judged = kept
-    scored = [r for r in judged if r["entity_grounding"] is not None]
-    entity_grounding = round(sum(r["entity_grounding"] for r in scored) / len(scored), 3) if scored else None
+    scored = [r["_eg_raw"] for r in judged if r["_eg_raw"] is not None]
+    entity_grounding = round(sum(scored) / len(scored), 3) if scored else None
+    for r in judged:
+        r.pop("_eg_raw", None)  # 임시 통계 필드 제거(export 오염 방지)
     halluc_records = sum(1 for r in judged if r["hallucinated_entities"])
     hallucination_rate = round(halluc_records / len(judged) * 100, 1) if judged else 0.0
 
