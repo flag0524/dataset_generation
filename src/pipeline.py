@@ -368,6 +368,24 @@ _GENERIC_Q = {
 }
 
 
+# 앵글 적용 게이트(category 라우팅) — 절차·비교형은 세그먼트가 그 성격을 실제로 담을 때만
+# 생성한다. 규범·정의형 세그먼트(제안이유·정의·위임 조항 등)에 '단계별 절차'나 '현행/개정 비교'를
+# 강제하면 원문에 없는 내용을 지어내(환각·저근거) grounded=false가 된다. explain/summarize/
+# terms/example/rule은 임의의 규범문에 보편 적용되므로 게이트하지 않는다.
+# 주의: '절차'라는 낱말만으로는 게이트하지 않는다('그 절차…는 대통령령으로 정한다'는 위임 조항일 뿐
+# 실제 단계 서술이 아니다). 순서·기한 등 실제 절차 신호를 요구한다.
+_PROC_SIGNAL = re.compile(r"순서|단계|이내에|먼저|그 다음|접수|신청|거쳐|제출하[여고]|신고하[여고]")
+_CMP_SIGNAL = re.compile(r"신설|개정|현행|전단\s*중|으로\s*하[고며다]|<\s*신\s*설\s*>|다음과\s*같이\s*(?:신설|개정)")
+
+
+def _angle_applies(kind: str, seg: str) -> bool:
+    if kind == "procedure":
+        return bool(_PROC_SIGNAL.search(seg))
+    if kind == "compare":
+        return bool(_CMP_SIGNAL.search(seg))
+    return True
+
+
 def _derive_outputs(seg: str, meta: dict, expert: str, llm: LLMClient, deadline=None) -> dict:
     # 한 세그먼트에서 앵글별 (질문 q, 답변 a)과 청크 키워드를 LLM 1회 호출로 얻는다.
     # 반환: {"angles": {kind: {"q":.., "a":..}}, "keywords": [..]} — a가 15자 이상인
@@ -466,6 +484,9 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
         for tmpl, kind in _TASKS:
             item = angles.get(kind)
             if not item:
+                continue
+            # category 라우팅: 세그먼트가 그 앵글의 성격을 담지 않으면 레코드로 만들지 않는다.
+            if not _angle_applies(kind, seg):
                 continue
             instructions.append({
                 "instruction": tmpl.format(expert=expert),
