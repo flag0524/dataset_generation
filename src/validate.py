@@ -195,6 +195,10 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
     for r in judged:
         c = r.get("category", "knowledge")
         category_dist[c] = category_dist.get(c, 0) + 1
+    # 다양성 지표(투명성): 같은 원문 청크가 여러 앵글로 반복되므로 고유 input 수를 함께 낸다.
+    # 학습 시 동일 문장 암기·데이터 누수(같은 input이 train/test에 갈림) 위험을 판단하는 근거.
+    unique_inputs = len({r["input"] for r in judged})
+    unique_sources = len({r.get("source_document", "") for r in judged})
 
     return {
         "quality_score": quality_score,
@@ -215,6 +219,8 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "ragas": ragas,
         "metadata_complete": metadata_complete,
         "category_dist": category_dist,
+        "unique_inputs": unique_inputs,
+        "unique_sources": unique_sources,
         "short_answer_count": short_answer_count,
         "negation_mismatch_count": negation_mismatch_count,
         "issues": issues,
