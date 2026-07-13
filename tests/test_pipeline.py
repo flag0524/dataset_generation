@@ -593,12 +593,29 @@ def test_t7_artifacts(result):
 
 
 # S-T1 산출물 파일명이 도메인 업무명 접두를 따르는지 (solution_tests.md)
+# 산출물은 실행별 폴더({도메인}_{타임스탬프}/)에 격리되므로 경로는 'run_dir/파일명' 형태다.
 def test_s_t1_domain_prefixed_filenames(result):
     domain = result["meta"]["domain"]
     a = result["artifacts"]
-    assert a["csv"].startswith(f"{domain}_"), a["csv"]
-    assert a["json"] == f"{domain}_dataset.json"
-    assert a["unsloth_alpaca"] == f"{domain}_unsloth_alpaca.jsonl"
+    run_dir = result["run_dir"]
+    assert run_dir.startswith(f"{domain}_")           # 실행 폴더도 도메인 접두
+    assert a["csv"].startswith(f"{run_dir}/{domain}_")
+    assert a["json"] == f"{run_dir}/{domain}_dataset.json"
+    assert a["unsloth_alpaca"] == f"{run_dir}/{domain}_unsloth_alpaca.jsonl"
+
+
+# 덮어쓰기 방지: 같은 도메인 문서를 다시 생성해도 이전 실행의 산출물이 살아 있어야 한다
+def test_s_run_dir_isolates_artifacts(tmp_path):
+    out = str(tmp_path)
+    r1 = run(SAMPLE, out_dir=out)
+    r2 = run(SAMPLE, out_dir=out)
+    assert r1["run_dir"] != r2["run_dir"]              # 실행마다 다른 폴더
+    p1 = os.path.join(out, r1["artifacts"]["json"])
+    p2 = os.path.join(out, r2["artifacts"]["json"])
+    assert os.path.exists(p1) and os.path.exists(p2)   # 1회차 산출물이 덮어써지지 않음
+    assert p1 != p2
+    # 이력(history.jsonl)은 실행 폴더가 아니라 베이스에 누적된다
+    assert os.path.exists(os.path.join(out, "history.jsonl"))
 
 
 # S-T4 검증 게이트 임계값이 환경변수로 조정되는지 (solution_tests.md)

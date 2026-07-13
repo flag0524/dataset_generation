@@ -226,7 +226,10 @@ const dlIcon = icon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path 
 function dl(artifacts, key, label) {
   const name = artifacts && artifacts[key];
   if (!name) return "";
-  return `<a href="/api/download/${encodeURIComponent(name)}">${dlIcon} ${label}</a>`;
+  // 산출물명은 '실행폴더/파일명' 형태다. 슬래시는 경로 구분자로 남기고 각 구간만 인코딩한다
+  // (encodeURIComponent로 통째 인코딩하면 %2F가 되어 서버의 {name:path} 매칭이 깨진다).
+  const href = name.split("/").map(encodeURIComponent).join("/");
+  return `<a href="/api/download/${href}">${dlIcon} ${label}</a>`;
 }
 
 function renderResult(d) {
