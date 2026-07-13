@@ -87,14 +87,40 @@ def test_t4_formats(result):
         assert [m["role"] for m in c["messages"]] == ["system", "user", "assistant"]
 
 
-# 2-2: 대화형 user 턴에 원문(input)이 실려야 한다(잘린 질문 암기 방지)
-def test_s_chat_user_turn_carries_source(result):
+# 2-2: 대화형 user 턴은 '자연어 질문 + 원문 근거'를 함께 실어야 한다.
+# 원문만 실으면 question 정보가 학습 변환본에서 유실되고, 질문만 실으면 문서기반 학습이 안 된다.
+def test_s_chat_user_turn_carries_question_and_source(result):
+    # unsloth는 '검증 후 정제된' 레코드로 만들어지므로 raw datasets와 인덱스가 다르다.
+    # 인덱스 대신 user 턴의 구조('질문\n\n[원문]\n원문')를 검증한다.
     u = result["unsloth"]
     inputs = {d["input"] for d in result["datasets"]["instruction"]}
+    questions = {d["question"] for d in result["datasets"]["qa"]}
+    assert any(q.strip() for q in questions)
+
+    def check(user):
+        assert "[원문]" in user                       # 질문과 원문이 함께 실림
+        q, src = user.split("\n\n[원문]\n", 1)
+        assert src in inputs                          # 원문 근거 유지(문서기반 학습)
+        assert q in questions                         # 질문 보존(유실 방지)
+
     for c in u["chatml"]:
-        assert c["messages"][1]["content"] in inputs  # user 턴 == 원문 청크
+        check(c["messages"][1]["content"])
     for c in u["sharegpt"]:
-        assert c["conversations"][1]["value"] in inputs
+        check(c["conversations"][1]["value"])
+
+
+# question이 마스터 JSON에 보존되고, grounded 판정 기준이 데이터에 자기설명되어야 한다
+def test_s_json_preserves_question_and_threshold(result):
+    from src.config import config
+    path = os.path.join(result["output_dir"], result["artifacts"]["json"])
+    recs = json.load(open(path, encoding="utf-8"))
+    assert all("question" in r for r in recs)                 # CSV에만 있던 질문 유실 방지
+    assert any(r["question"].strip() for r in recs)
+    m = recs[0]["metadata"]
+    # grounded가 어느 임계값·방법으로 판정됐는지 데이터가 스스로 설명해야 한다
+    assert m["grounding_threshold"] == config.grounding_min
+    assert "lexical" in m["grounding_method"]
+    assert "regex" in m["entity_grounding_method"]
 
 
 # 2-1: question은 원문 절단 접미 템플릿이 아니어야 한다(괄호미닫힘·조사노출 없음)
