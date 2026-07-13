@@ -16,6 +16,23 @@ def _domain_prefix(domain: str) -> str:
     return prefix or "domain"
 
 
+def _new_run_dir(out_dir: str, prefix: str) -> str:
+    # 실행마다 output/{도메인}_{타임스탬프}/ 하위 폴더에 산출물을 격리한다.
+    # 같은 도메인 문서를 다시 생성해도 이전 산출물(누적 데이터셋)을 덮어쓰지 않는다.
+    # 반환값은 out_dir 기준 상대 폴더명이며, artifacts 경로의 접두가 된다.
+    from datetime import datetime
+    name = f"{prefix}_{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    path = os.path.join(out_dir, name)
+    # 같은 초에 두 번 실행되면 -2, -3 … 으로 비켜 간다(덮어쓰기 방지).
+    n = 2
+    while os.path.exists(path):
+        name = f"{prefix}_{datetime.now().strftime('%Y%m%d-%H%M%S')}-{n}"
+        path = os.path.join(out_dir, name)
+        n += 1
+    os.makedirs(path, exist_ok=True)
+    return name
+
+
 # 진행률 이벤트 단계 라벨 (UI 진행 표시용)
 _STAGES = [
     "문서 로딩", "문서 분석", "전문가 라우팅", "지식 추출",
@@ -81,19 +98,18 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
     # STEP5/6/8 산출 — 파일명은 도메인 업무명 접두를 따른다(예: 공공행정_dataset.csv).
     _emit(8)
     prefix = _domain_prefix(meta["domain"])
-    artifacts = {
-        "csv": f"{prefix}_dataset.csv",
-        "json": f"{prefix}_dataset.json",
-        "metadata": f"{prefix}_dataset_metadata.json",
-        "report": f"{prefix}_dataset_report.md",
-        "unsloth_raw": f"{prefix}_unsloth_raw.jsonl",
-        "unsloth_alpaca": f"{prefix}_unsloth_alpaca.jsonl",
-        "unsloth_sharegpt": f"{prefix}_unsloth_sharegpt.jsonl",
-        "unsloth_chatml": f"{prefix}_unsloth_chatml.jsonl",
-    }
+    # 실행별 하위 폴더에 격리 저장 → 같은 도메인 재생성이 기존 산출물을 덮어쓰지 않는다.
+    run_dir = _new_run_dir(out_dir, prefix)
+    artifacts = {k: f"{run_dir}/{prefix}_{v}" for k, v in {
+        "csv": "dataset.csv", "json": "dataset.json",
+        "metadata": "dataset_metadata.json", "report": "dataset_report.md",
+        "unsloth_raw": "unsloth_raw.jsonl", "unsloth_alpaca": "unsloth_alpaca.jsonl",
+        "unsloth_sharegpt": "unsloth_sharegpt.jsonl", "unsloth_chatml": "unsloth_chatml.jsonl",
+    }.items()}
+    run_path = os.path.join(out_dir, run_dir)
     export.write_csv(final_records, os.path.join(out_dir, artifacts["csv"]))
     export.write_json(final_records, os.path.join(out_dir, artifacts["json"]))
-    export.write_unsloth(unsloth, out_dir, prefix=prefix)
+    export.write_unsloth(unsloth, run_path, prefix=prefix)
     export.write_metadata(len(final_records), os.path.join(out_dir, artifacts["metadata"]))
     export.write_report(meta, validation, os.path.join(out_dir, artifacts["report"]),
                         extraction_mode=extracted.get("extraction_mode"))
@@ -110,7 +126,8 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
         "status": validation["status"],
         "extraction_mode": extracted.get("extraction_mode"),
         "llm_mode": "ollama" if llm.available() else "mock",
-    }, os.path.join(out_dir, "history.jsonl"))
+        "run_dir": run_dir,  # 산출물이 저장된 실행별 폴더
+    }, os.path.join(out_dir, "history.jsonl"))  # 이력은 베이스에 누적(실행 폴더 아님)
 
     return {
         "meta": meta,
@@ -121,7 +138,8 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
         "datasets": datasets,
         "unsloth": unsloth,
         "validation": validation,
-        "output_dir": out_dir,
+        "output_dir": out_dir,   # 베이스(artifacts는 이 기준 상대경로)
+        "run_dir": run_dir,      # 이번 실행 폴더명
         "artifacts": artifacts,
         "llm_mode": "ollama" if llm.available() else "mock",
     }
@@ -178,15 +196,18 @@ def run_many(paths: list, out_dir: str = None, name: str = "법률_통합",
     unsloth = pipeline.to_unsloth_formats(clean)
 
     prefix = _domain_prefix(name)
-    artifacts = {k: f"{prefix}_{v}" for k, v in {
+    # 실행별 하위 폴더에 격리 저장(단일 생성과 동일) → 기존 산출물 덮어쓰기 방지.
+    run_dir = _new_run_dir(out_dir, prefix)
+    artifacts = {k: f"{run_dir}/{prefix}_{v}" for k, v in {
         "csv": "dataset.csv", "json": "dataset.json", "metadata": "dataset_metadata.json",
         "report": "dataset_report.md", "unsloth_raw": "unsloth_raw.jsonl",
         "unsloth_alpaca": "unsloth_alpaca.jsonl", "unsloth_sharegpt": "unsloth_sharegpt.jsonl",
         "unsloth_chatml": "unsloth_chatml.jsonl",
     }.items()}
+    run_path = os.path.join(out_dir, run_dir)
     export.write_csv(final_records, os.path.join(out_dir, artifacts["csv"]))
     export.write_json(final_records, os.path.join(out_dir, artifacts["json"]))
-    export.write_unsloth(unsloth, out_dir, prefix=prefix)
+    export.write_unsloth(unsloth, run_path, prefix=prefix)
     export.write_metadata(len(final_records), os.path.join(out_dir, artifacts["metadata"]))
 
     # 통합 메타로 리포트 작성 + 소스 구성(다양성) 명시
@@ -204,6 +225,7 @@ def run_many(paths: list, out_dir: str = None, name: str = "법률_통합",
         "sources": sources,
         "validation": validation,
         "output_dir": out_dir,
+        "run_dir": run_dir,
         "artifacts": artifacts,
         "llm_mode": "ollama" if llm.available() else "mock",
     }
