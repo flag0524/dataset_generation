@@ -709,3 +709,16 @@ def test_s_t6_loader_clear_fallback(tmp_path):
     h.write_bytes(b"not-an-ole-file")
     with pytest.raises(ValueError, match="HWP"):
         load_document(str(h))
+
+
+# 회귀: /api/generate 는 반드시 동기(def) 핸들러여야 한다.
+# async def로 되돌리면 run()/run_many()의 블로킹(PDF·OCR·LLM 수 분)이 이벤트 루프를
+# 점유해 생성 중 서버 전체(랜딩/대시보드/이력/다운로드)가 응답 불가가 된다.
+# Found by /qa on 2026-07-13. 실측: 생성 중 4개 라우트 전부 타임아웃 → 종료 후 전부 200.
+def test_generate_route_is_sync_not_blocking_event_loop():
+    import inspect
+    from web.app import generate
+    assert not inspect.iscoroutinefunction(generate), (
+        "/api/generate가 async def이면 블로킹 파이프라인이 이벤트 루프를 막아 "
+        "생성 중 서버 전체가 멈춘다. def로 두어 스레드풀에서 실행되게 하라."
+    )
