@@ -98,6 +98,7 @@ def _segments(text: str):
         joined = re.sub(r"\s*\n\s*", " ", p).strip()
         if not joined:
             continue
+        accepted = []
         for s in re.split(r"(?<=[.!?。])\s+", joined):
             # 페이지 마커('- 1 -')·대비표 마커를 앞머리 cosmetic strip보다 먼저 제거한다.
             # strip을 먼저 하면 '- 1 -'의 선행 '-'가 떨어져 '1 -'가 되어 페이지마커
@@ -107,7 +108,17 @@ def _segments(text: str):
                 continue
             cleaned = re.sub(r"\s+", " ", s).strip(" ·⋅.")
             if len(cleaned) >= config.min_seg_len:
-                segs.append(cleaned)
+                accepted.append(cleaned)
+        if not accepted:
+            # 문장 단위로는 전부 임계값 미만이나 문단 자체는 실질 내용인 경우, 문단을
+            # 통째로 한 청크로 살린다. 짧은 문장이 이어지는 한국어 매뉴얼("~한다." 40자)은
+            # 문장으로 쪼개면 전부 미달이라 문단이 통째로 사라져 0행 FAIL이 됐다.
+            # 법령·의안처럼 문장이 긴 문서는 위에서 이미 통과하므로 이 폴백이 발동하지 않는다.
+            whole = _AMENDMENT_STRIP.sub(" ", joined).strip(" -*#\t·")
+            whole = re.sub(r"\s+", " ", whole).strip(" ·⋅.")
+            if len(whole) >= config.min_seg_len and not _is_noise(whole):
+                accepted.append(whole)
+        segs.extend(accepted)
     return segs
 
 

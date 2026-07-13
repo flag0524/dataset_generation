@@ -8,3 +8,4 @@ output/
 # 작업 중 생성한 검증용 캡처 이미지
 docs/*.png
 *.png
+.gstack/

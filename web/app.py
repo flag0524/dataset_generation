@@ -63,7 +63,12 @@ def _fix_filename(name: str) -> str:
 
 
 @app.post("/api/generate")
-async def generate(files: List[UploadFile] = File(...), preview: bool = Form(False)):
+def generate(files: List[UploadFile] = File(...), preview: bool = Form(False)):
+    # 동기(def) 핸들러여야 한다. run()/run_many()는 PDF 파싱·OCR·LLM 호출로 수 분간
+    # 블로킹하는데, async def면 이벤트 루프 위에서 돌아 생성 중 서버 전체가 멈춘다
+    # (랜딩·대시보드·이력·다운로드까지 전부 응답 불가). def면 Starlette가 스레드풀로
+    # 보내므로 생성 중에도 나머지 라우트가 살아 있다.
+    #
     # 파일 1개면 단일 생성(run), 여러 개면 통합 생성(run_many). 여러 관련 문서
     # (예: 의안원문+검토보고서)를 함께 넣으면 소스가 커져 권장 행 수에 도달하기 쉽다.
     tmpdir = tempfile.mkdtemp()
@@ -74,7 +79,7 @@ async def generate(files: List[UploadFile] = File(...), preview: bool = Form(Fal
             # multipart 파일명은 Starlette가 latin-1로 디코드해 한글이 깨지므로 UTF-8로 복원한다.
             p = os.path.join(tmpdir, os.path.basename(_fix_filename(f.filename)))
             with open(p, "wb") as out:
-                out.write(await f.read())
+                shutil.copyfileobj(f.file, out)  # 동기 핸들러이므로 await f.read() 대신 파일객체 사용
             named_paths.append(p)
         budget = PREVIEW_BUDGET_S if preview else None
         if len(named_paths) == 1:

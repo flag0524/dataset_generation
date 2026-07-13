@@ -709,3 +709,65 @@ def test_s_t6_loader_clear_fallback(tmp_path):
     h.write_bytes(b"not-an-ole-file")
     with pytest.raises(ValueError, match="HWP"):
         load_document(str(h))
+
+
+# 회귀: /api/generate 는 반드시 동기(def) 핸들러여야 한다.
+# async def로 되돌리면 run()/run_many()의 블로킹(PDF·OCR·LLM 수 분)이 이벤트 루프를
+# 점유해 생성 중 서버 전체(랜딩/대시보드/이력/다운로드)가 응답 불가가 된다.
+# Found by /qa on 2026-07-13. 실측: 생성 중 4개 라우트 전부 타임아웃 → 종료 후 전부 200.
+def test_generate_route_is_sync_not_blocking_event_loop():
+    import inspect
+    from web.app import generate
+    assert not inspect.iscoroutinefunction(generate), (
+        "/api/generate가 async def이면 블로킹 파이프라인이 이벤트 루프를 막아 "
+        "생성 중 서버 전체가 멈춘다. def로 두어 스레드풀에서 실행되게 하라."
+    )
+
+
+# 회귀: 짧은 문장이 이어지는 한국어 문서가 세그먼트 0개로 사라지면 안 된다.
+# min_seg_len=50(2차 검증보고서 품질 강화)이 들어온 뒤, "~한다."로 끝나는 40자 내외
+# 문장으로 구성된 문단이 문장 분할 후 전부 임계값 미만이 되어 통째로 버려졌다.
+# 결과: samples/sample_admin.txt가 0행/품질0/FAIL. Found by /qa on 2026-07-13.
+def test_short_sentence_korean_doc_keeps_paragraph_fallback():
+    from src.pipeline import _segments
+    # 각 문장은 50자 미만이지만 문단 전체는 50자 이상 — 버리면 안 된다.
+    text = "민원 접수 절차\n\n민원은 방문으로 접수한다. 담당자는 종류를 구분한다. 처리 기한을 안내한다."
+    segs = _segments(text)
+    assert segs, "문장이 모두 임계값 미만이어도 문단이 실질 내용이면 살려야 한다"
+    assert any("민원은 방문으로 접수한다" in s for s in segs)
+    # 임계값 미만의 짧은 제목 문단은 여전히 버려야 한다(폴백이 노이즈를 살리면 안 됨).
+    assert not any(s.strip() == "민원 접수 절차" for s in segs)
+
+
+# 회귀: 문장이 긴 법령·의안 문서에서는 폴백이 발동하지 않아야 한다(청크 수 불변).
+def test_paragraph_fallback_does_not_alter_long_sentence_docs():
+    from src.pipeline import _segments
+    # 각 문장이 이미 50자를 넘으므로 문장 단위로 정상 채택 → 문단 폴백 미발동.
+    long1 = "이 법은 건설공사의 발주자와 수급인 사이의 권리와 의무를 명확히 정하여 공정한 계약 질서를 확립함을 목적으로 한다."
+    long2 = "발주자는 공사대금을 준공검사 완료일부터 60일 이내에 수급인에게 지급하여야 하며 이를 초과할 수 없다."
+    segs = _segments(f"{long1} {long2}")
+    assert len(segs) == 2, "문장별로 채택되어야 하며 문단이 통째로 한 청크가 되면 안 된다"
+
+
+# 원문 정제: 제어문자 제거 + 개인정보 비식별화 (법률_통합 품질검증보고서 §6-1, §6-2)
+def test_sanitize_strips_control_chars_and_masks_pii():
+    from src.loaders import _sanitize
+    # PDF 텍스트 레이어에 박혀 오던 NUL은 CSV/JSON 산출물을 표준 파서로 못 읽게 만든다.
+    assert "\x00" not in _sanitize("개정안은\x00 다음과 같다.")
+    # 문서 구조인 개행·탭은 남긴다.
+    assert _sanitize("가\n나\t다") == "가\n나\t다"
+    # 공공 문서 본문의 담당자 연락처는 배포 전에 비식별화한다.
+    assert _sanitize("문의 ndhan@assembly.go.kr") == "문의 [이메일]"
+    assert _sanitize("연락처 02-788-2222") == "연락처 [전화번호]"
+    assert _sanitize("주민번호 900101-1234567") == "주민번호 [주민등록번호]"
+
+
+# 정제가 법령 문구(조문번호·금액·날짜)를 과잉 마스킹하면 안 된다.
+def test_sanitize_preserves_legal_text():
+    from src.loaders import _sanitize
+    for s in [
+        "제12조제3항에 따라 2024. 5. 1.부터 시행한다.",
+        "공사대금 1,250,000원을 60일 이내에 지급하여야 한다.",
+        "법률 제20301호, 2024-05-01 공포",
+    ]:
+        assert _sanitize(s) == s, f"법령 문구가 훼손됨: {s}"
