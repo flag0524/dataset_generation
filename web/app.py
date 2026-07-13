@@ -147,9 +147,12 @@ def history():
     return JSONResponse({"kpi": kpi, "runs": runs})
 
 
-@app.get("/api/download/{name}")
+@app.get("/api/download/{name:path}")
 def download(name: str):
-    path = os.path.join(config.output_dir, name)
-    if not os.path.exists(path):
+    # 산출물은 실행별 폴더에 저장되므로 name은 '실행폴더/파일명' 형태다({name:path}로 수신).
+    # 경로 조작(../)으로 output 밖 파일을 읽지 못하도록 실제 경로가 output 하위인지 검증한다.
+    base = os.path.realpath(config.output_dir)
+    path = os.path.realpath(os.path.join(base, name))
+    if os.path.commonpath([base, path]) != base or not os.path.isfile(path):
         return JSONResponse({"error": "not found"}, status_code=404)
-    return FileResponse(path, filename=name)
+    return FileResponse(path, filename=os.path.basename(path))
