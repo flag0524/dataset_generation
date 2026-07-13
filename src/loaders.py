@@ -69,22 +69,44 @@ def _ole_subtype(path: str) -> str:
     return "구형 오피스/HWP"
 
 
+# 원문에 섞여 들어오는 C0 제어문자. PDF 텍스트 레이어에 NUL(0x00)이 박혀 있는 경우가 있고,
+# 그대로 두면 CSV엔 생 0x00, JSON엔 이스케이프된 널문자로 흘러가 표준 파서(pandas 등) 로드가 깨진다.
+# 문서 구조인 개행·탭·복귀는 남긴다.
+_CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+# 개인정보 비식별화. 공공 문서 본문에는 담당자 이메일·연락처가 그대로 실려 있어
+# 학습 데이터로 배포하면 개인정보가 함께 나간다. 원문 로드 시점에 치환하면
+# input·source_span·근거성 계산이 모두 같은 텍스트를 보므로 일관성이 깨지지 않는다.
+# 오탐을 피하려고 구분자가 명시된 형태만 잡는다(법령 문서의 조문번호·금액·날짜 보호).
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+_RRN = re.compile(r"\b\d{6}-[1-8]\d{6}\b")
+_PHONE = re.compile(r"\b0\d{1,2}-\d{3,4}-\d{4}\b")
+
+
+def _sanitize(text: str) -> str:
+    text = _CTRL.sub("", text)
+    text = _EMAIL.sub("[이메일]", text)
+    text = _RRN.sub("[주민등록번호]", text)
+    text = _PHONE.sub("[전화번호]", text)
+    return text
+
+
 def load_document(path: str) -> str:
     ext = os.path.splitext(path)[1].lower()
     if ext in (".txt", ".md", ".markdown"):
-        return _read_text(path)
+        return _sanitize(_read_text(path))
     if ext == ".pdf":
-        return _load_pdf(path)
+        return _sanitize(_load_pdf(path))
     if ext == ".docx":
-        return _load_docx(path)
+        return _sanitize(_load_docx(path))
     if ext == ".pptx":
-        return _load_pptx(path)
+        return _sanitize(_load_pptx(path))
     if ext == ".xlsx":
-        return _load_xlsx(path)
+        return _sanitize(_load_xlsx(path))
     if ext == ".hwp":
-        return _load_hwp(path)
+        return _sanitize(_load_hwp(path))
     if ext in (".png", ".jpg", ".jpeg", ".tiff", ".bmp"):
-        return _load_ocr(path)
+        return _sanitize(_load_ocr(path))
     raise ValueError(f"지원하지 않는 포맷: {ext}")
 
 

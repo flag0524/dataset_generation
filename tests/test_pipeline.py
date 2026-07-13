@@ -747,3 +747,27 @@ def test_paragraph_fallback_does_not_alter_long_sentence_docs():
     long2 = "발주자는 공사대금을 준공검사 완료일부터 60일 이내에 수급인에게 지급하여야 하며 이를 초과할 수 없다."
     segs = _segments(f"{long1} {long2}")
     assert len(segs) == 2, "문장별로 채택되어야 하며 문단이 통째로 한 청크가 되면 안 된다"
+
+
+# 원문 정제: 제어문자 제거 + 개인정보 비식별화 (법률_통합 품질검증보고서 §6-1, §6-2)
+def test_sanitize_strips_control_chars_and_masks_pii():
+    from src.loaders import _sanitize
+    # PDF 텍스트 레이어에 박혀 오던 NUL은 CSV/JSON 산출물을 표준 파서로 못 읽게 만든다.
+    assert "\x00" not in _sanitize("개정안은\x00 다음과 같다.")
+    # 문서 구조인 개행·탭은 남긴다.
+    assert _sanitize("가\n나\t다") == "가\n나\t다"
+    # 공공 문서 본문의 담당자 연락처는 배포 전에 비식별화한다.
+    assert _sanitize("문의 ndhan@assembly.go.kr") == "문의 [이메일]"
+    assert _sanitize("연락처 02-788-2222") == "연락처 [전화번호]"
+    assert _sanitize("주민번호 900101-1234567") == "주민번호 [주민등록번호]"
+
+
+# 정제가 법령 문구(조문번호·금액·날짜)를 과잉 마스킹하면 안 된다.
+def test_sanitize_preserves_legal_text():
+    from src.loaders import _sanitize
+    for s in [
+        "제12조제3항에 따라 2024. 5. 1.부터 시행한다.",
+        "공사대금 1,250,000원을 60일 이내에 지급하여야 한다.",
+        "법률 제20301호, 2024-05-01 공포",
+    ]:
+        assert _sanitize(s) == s, f"법령 문구가 훼손됨: {s}"
