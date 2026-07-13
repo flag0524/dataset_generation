@@ -25,19 +25,28 @@ def write_json(records: list, path: str):
         "id": r["id"],
         "domain": r["domain"],
         "category": r["category"],
+        # 자연어 질문. 이전에는 CSV에만 있어 마스터 JSON·학습 변환본에서 유실됐다.
+        "question": r.get("question", ""),
         "instruction": r["instruction"],
         "input": r["input"],
         "output": r["output"],
         "metadata": {
             "source": r["source_document"],
             "keyword": r["keyword"],
-            # 근거성 흔적: output이 원문(input)에 근거하는 정도와 플래그(감사 추적용).
+            # 근거성(어휘): output이 '소스 문서 전체'와 공유하는 토큰 비율.
+            # grounded는 아래 grounding_threshold(어휘 기준) 대비 판정이며,
+            # 리포트의 공공기관 기준 0.80은 '엔티티(사실) 근거성'에 적용되는 별개 지표다.
+            # 두 값을 혼동하지 않도록 임계값과 방법을 데이터에 함께 기록한다.
             "grounding": r.get("grounding"),
             "grounded": r.get("grounded"),
-            # 방법론 Entity 검증: 엔티티 근거성과 원문에 없는(환각 의심) 엔티티.
+            "grounding_threshold": config.grounding_min,
+            "grounding_method": "lexical_token_overlap(output, source_document)",
+            # 방법론 Entity 검증: 조문·금액·날짜·법령명·기관명을 규칙(정규식)으로 추출해
+            # 소스 문서 전체와 대조한다. hallucinated_entities = 문서에 없는 엔티티.
             "entity_grounding": r.get("entity_grounding"),
+            "entity_grounding_method": "regex_entity_match(output, source_document)",
             "hallucinated_entities": r.get("hallucinated_entities", []),
-            "source_span": r["input"],  # 근거 원문 구간(해당 청크)
+            "source_span": r["input"],  # 근거 원문 구간(=input, 해당 청크)
             # 법안 최신성(발의안 오인 방지).
             "bill_number": r.get("bill_number"),
             "assembly_term": r.get("assembly_term"),
@@ -127,6 +136,32 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 초단답(30자 미만): {validation.get('short_answer_count', 0)}건 (검수 권장)",
         f"- 부정문 의미반전 위험: {validation.get('negation_mismatch_count', 0)}건 "
         "(원문 부정어가 답변에서 사라짐 — 검수 우선)",
+    ]
+    # 검증 설계 투명성: 어떤 임계값·방법으로 잰 값인지 데이터와 함께 명시한다.
+    # (grounded 플래그와 공공기관 0.80 기준이 서로 다른 지표라는 점을 오해하지 않도록.)
+    rows_n = validation["row_count"]
+    uniq_in = validation.get("unique_inputs", 0)
+    per_input = round(rows_n / uniq_in, 1) if uniq_in else 0
+    lines += [
+        "",
+        "## 검증 설정 (재현·해석용)",
+        f"- 어휘 근거성: `grounding` = output↔**소스 문서 전체**의 토큰 중첩 비율. "
+        f"`grounded` 판정 임계값 **{config.grounding_min}** (LLM이 재진술하므로 어휘 일치는 낮은 게 정상).",
+        f"- 엔티티(사실) 근거성: 조문·금액·날짜·법령명·기관명을 규칙(정규식)으로 추출해 소스 문서와 대조. "
+        f"공공기관 기준 **{config.std_grounding}**은 이 지표에 적용되며 `grounded` 플래그와는 **별개 지표**다.",
+        "- 환각 판정: 위 규칙 기반 엔티티 대조로 '문서에 없는 엔티티'를 표시(LLM 심판 아님). "
+        "원문 PDF 대조가 아닌 추출 텍스트 대조이므로 OCR 오류는 별도 측정이 필요하다.",
+        f"- 중복률 정의: **제거된 중복 레코드 수 ÷ 전체 레코드 수** "
+        f"({validation.get('duplicates_removed', 0)}/{validation.get('duplicates_removed', 0) + rows_n} 기준, "
+        "질문·답변 완전일치 쌍 제거).",
+        "- OCR 정확도: 원문 PDF와의 CER/WER를 런타임에 측정하지 않으므로 **미측정(N/A)**으로 둔다"
+        "(`source_span`은 `input`과 동일한 값이라 자기비교로는 OCR을 입증할 수 없다).",
+        "",
+        "## 다양성 (학습 시 암기·누수 위험 판단용)",
+        f"- 소스 문서 수: {validation.get('unique_sources', 0)} / 고유 원문 청크(input): **{uniq_in}개**",
+        f"- 청크당 평균 레코드: **{per_input}건** (같은 원문이 여러 과제 앵글로 반복 등장)",
+        f"- 학습/검증 분할은 **원문 청크(또는 소스 문서) 단위**로 하십시오. "
+        "같은 input이 서로 다른 분할에 들어가면 데이터 누수가 발생합니다.",
     ]
     _rg = validation.get("ragas")
     if _rg:

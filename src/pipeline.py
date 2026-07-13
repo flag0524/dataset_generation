@@ -516,30 +516,42 @@ def generate_datasets(text: str, meta: dict, extracted: dict, llm: LLMClient, de
 
 
 # ---------- STEP 4.5 Unsloth 포맷 변환 ----------
+def _user_turn(question: str, source: str) -> str:
+    # 대화형 user 턴 = 자연어 질문 + 원문 근거. 질문만 넣으면 문서기반 학습이 안 되고,
+    # 원문만 넣으면(기존) CSV의 question 정보가 학습 변환본에서 통째로 유실된다. 둘 다 싣는다.
+    q = (question or "").strip()
+    return f"{q}\n\n[원문]\n{source}" if q else source
+
+
 def to_unsloth_formats(datasets: dict) -> dict:
-    raw = [{"text": d["output"]} for d in datasets["instruction"]]
+    inst = datasets["instruction"]
+    qas = datasets.get("qa") or []
+    raw = [{"text": d["output"]} for d in inst]
     # Unsloth/HuggingFace 표준 alpaca 매핑은 소문자 키를 기대한다(대문자면 KeyError 위험).
+    # alpaca는 (instruction, input, output) 삼중항이 표준이라 스키마를 바꾸지 않는다.
     alpaca = [
         {"instruction": d["instruction"], "input": d["input"], "output": d["output"]}
-        for d in datasets["instruction"]
+        for d in inst
     ]
-    # 대화형 포맷은 instruction 삼중항을 3턴으로 옮긴다(보고서 2-2): system=지시,
-    # user=원문(input), assistant=출력. user 턴에 원문 근거가 실려 문서기반 학습이 된다.
+    # 대화형 3턴: system=지시, user=질문+원문(근거), assistant=출력.
+    # instruction/qa는 같은 인덱스로 나란히 생성되므로 zip으로 질문을 짝짓는다.
+    users = [_user_turn(qas[i]["question"] if i < len(qas) else "", d["input"])
+             for i, d in enumerate(inst)]
     sharegpt = [
         {"conversations": [
             {"from": "system", "value": d["instruction"]},
-            {"from": "human", "value": d["input"]},
+            {"from": "human", "value": users[i]},
             {"from": "gpt", "value": d["output"]},
         ]}
-        for d in datasets["instruction"]
+        for i, d in enumerate(inst)
     ]
     chatml = [
         {"messages": [
             {"role": "system", "content": d["instruction"]},
-            {"role": "user", "content": d["input"]},
+            {"role": "user", "content": users[i]},
             {"role": "assistant", "content": d["output"]},
         ]}
-        for d in datasets["instruction"]
+        for i, d in enumerate(inst)
     ]
     return {"raw": raw, "alpaca": alpaca, "sharegpt": sharegpt, "chatml": chatml}
 
