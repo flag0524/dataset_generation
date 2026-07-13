@@ -722,3 +722,28 @@ def test_generate_route_is_sync_not_blocking_event_loop():
         "/api/generate가 async def이면 블로킹 파이프라인이 이벤트 루프를 막아 "
         "생성 중 서버 전체가 멈춘다. def로 두어 스레드풀에서 실행되게 하라."
     )
+
+
+# 회귀: 짧은 문장이 이어지는 한국어 문서가 세그먼트 0개로 사라지면 안 된다.
+# min_seg_len=50(2차 검증보고서 품질 강화)이 들어온 뒤, "~한다."로 끝나는 40자 내외
+# 문장으로 구성된 문단이 문장 분할 후 전부 임계값 미만이 되어 통째로 버려졌다.
+# 결과: samples/sample_admin.txt가 0행/품질0/FAIL. Found by /qa on 2026-07-13.
+def test_short_sentence_korean_doc_keeps_paragraph_fallback():
+    from src.pipeline import _segments
+    # 각 문장은 50자 미만이지만 문단 전체는 50자 이상 — 버리면 안 된다.
+    text = "민원 접수 절차\n\n민원은 방문으로 접수한다. 담당자는 종류를 구분한다. 처리 기한을 안내한다."
+    segs = _segments(text)
+    assert segs, "문장이 모두 임계값 미만이어도 문단이 실질 내용이면 살려야 한다"
+    assert any("민원은 방문으로 접수한다" in s for s in segs)
+    # 임계값 미만의 짧은 제목 문단은 여전히 버려야 한다(폴백이 노이즈를 살리면 안 됨).
+    assert not any(s.strip() == "민원 접수 절차" for s in segs)
+
+
+# 회귀: 문장이 긴 법령·의안 문서에서는 폴백이 발동하지 않아야 한다(청크 수 불변).
+def test_paragraph_fallback_does_not_alter_long_sentence_docs():
+    from src.pipeline import _segments
+    # 각 문장이 이미 50자를 넘으므로 문장 단위로 정상 채택 → 문단 폴백 미발동.
+    long1 = "이 법은 건설공사의 발주자와 수급인 사이의 권리와 의무를 명확히 정하여 공정한 계약 질서를 확립함을 목적으로 한다."
+    long2 = "발주자는 공사대금을 준공검사 완료일부터 60일 이내에 수급인에게 지급하여야 하며 이를 초과할 수 없다."
+    segs = _segments(f"{long1} {long2}")
+    assert len(segs) == 2, "문장별로 채택되어야 하며 문단이 통째로 한 청크가 되면 안 된다"
