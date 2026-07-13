@@ -6,7 +6,7 @@ import time
 from . import pipeline, export, validate
 from .config import config
 from .llm import LLMClient
-from .loaders import load_document
+from .loaders import load_document, ocr_usage
 
 
 def _domain_prefix(domain: str) -> str:
@@ -62,8 +62,15 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
     # STEP1~2
     _emit(1)
     text = load_document(path)
+    # OCR 사용 여부·정확도(독립 측정). OCR 경로는 실측 문자 정확도가 낮아(공백 제외 64%대)
+    # 스캔 PDF를 넣으면 텍스트 품질이 크게 떨어진다. 리포트가 이를 숨기지 않도록 기록한다.
+    ocr = ocr_usage(path)
+    if config.ocr_eval_enabled and path.lower().endswith(".pdf"):
+        from . import ocr_eval
+        ocr["measure"] = ocr_eval.measure_pdf_ocr(path)
     _emit(2)
     meta = pipeline.analyze(text, document_name, llm)
+    meta["ocr"] = ocr  # 리포트가 OCR 사용 여부·정확도를 그대로 노출한다
     _emit(3)
     expert = pipeline.route_expert(meta["domain"])
 
@@ -81,6 +88,17 @@ def run(path: str, out_dir: str = None, on_progress=None, time_budget: float = N
     _emit(7)
     validation = validate.run_validation(datasets, pipeline.to_unsloth_formats(datasets), records, llm=llm)
     final_records = validation["records"]
+
+    # 저근거 재작성 패스(옵인): 어휘 근거성이 낮은 레코드를 원문 표현을 살려 다시 쓴다.
+    # 근거성이 실제로 오르고 새 환각이 없을 때만 채택하므로 품질이 나빠질 수 없다.
+    if config.grounding_rewrite:
+        from . import rewrite
+        rw = rewrite.rewrite_low_grounding(final_records, llm)
+        validation["rewrite"] = rw
+        if rw.get("rewritten"):
+            # 재작성으로 바뀐 값으로 요약 지표를 다시 낸다(엔티티 평균은 실제 엔티티 보유
+            # 레코드만 대상 — 어휘 폴백값을 섞으면 지표가 오염된다).
+            validation.update(rewrite.recompute_metrics(final_records))
 
     # Unsloth JSONL은 정제 후 최종 레코드에서 생성해 JSON/CSV와 건수·내용을 일치시킨다
     # (과거엔 정제 전 datasets에서 생성돼 미정제본이 학습에 쓰이는 문제가 있었다).
