@@ -109,6 +109,32 @@ def test_s_chat_user_turn_carries_question_and_source(result):
         check(c["conversations"][1]["value"])
 
 
+# OCR 독립 측정: CER/WER 계산과 '자기비교 금지' 원칙(참조≠가설)
+def test_s_ocr_cer_wer():
+    from src import ocr_eval
+    assert ocr_eval.cer("건설산업기본법", "건설산업기본법") == 0.0
+    assert ocr_eval.wer("가 나 다", "가 나 다") == 0.0
+    # 1자 치환 → CER = 1/7
+    assert round(ocr_eval.cer("건설산업기본법", "건설산업기몬법"), 3) == round(1 / 7, 3)
+    # 공백 차이는 오류로 세지 않는다(표준 CER 관행)
+    assert ocr_eval.cer("가 나  다", "가 나 다") == 0.0
+    # 스캔 아닌(텍스트 레이어) PDF는 OCR 미사용으로 판정돼야 한다
+    from src.loaders import ocr_usage
+    pdf = os.path.join(os.path.dirname(SAMPLE), "2024590_의사국 의안과_의안원문.pdf")
+    if os.path.exists(pdf):
+        u = ocr_usage(pdf)
+        assert u["used"] is False and u["total_pages"] > 0
+
+
+# 리포트 OCR 행: 자기비교로 100% 주장하지 않고, 미사용/독립측정 상태를 그대로 표기
+def test_s_report_ocr_not_self_claimed(result):
+    report = open(os.path.join(result["output_dir"], result["artifacts"]["report"]),
+                  encoding="utf-8").read()
+    assert "OCR 정확도" in report
+    assert "자기비교로는 입증 불가" in report   # 지적 ①의 근거를 리포트가 명시
+    assert "100%" not in report.split("| OCR 정확도")[1].split("|")[2] if "| OCR 정확도" in report else True
+
+
 # question이 마스터 JSON에 보존되고, grounded 판정 기준이 데이터에 자기설명되어야 한다
 def test_s_json_preserves_question_and_threshold(result):
     from src.config import config
