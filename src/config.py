@@ -67,5 +67,16 @@ class Config:
     std_quality: int = int(os.getenv("STD_QUALITY", "90"))
     std_ocr: float = float(os.getenv("STD_OCR", "99.0"))
 
+    # 저근거 재작성 패스: 어휘 근거성이 grounding_rewrite_min 미만인 레코드를 '원문 표현을
+    # 살려' 다시 쓴다. 근거성이 실제로 오르고 새 환각이 없을 때만 채택하므로 개악하지 않는다.
+    # LLM 재호출 비용이 있어 기본 OFF(GROUNDING_REWRITE=1로 켠다).
+    grounding_rewrite: bool = os.getenv("GROUNDING_REWRITE", "").lower() in ("1", "true", "yes")
+    grounding_rewrite_min: float = float(os.getenv("GROUNDING_REWRITE_MIN", "0.4"))
+
+    # OCR 정확도 독립 측정(CER/WER) 여부. PDF 텍스트 레이어(참조) vs 렌더+OCR(가설)을
+    # 대조해 실제 문자 오류율을 낸다. 페이지 렌더링+OCR이라 느려 기본 OFF(OCR_EVAL=1로 켠다).
+    # 끄면 리포트는 'OCR 사용 여부'만 표기하고 정확도는 미측정으로 둔다.
+    ocr_eval_enabled: bool = os.getenv("OCR_EVAL", "").lower() in ("1", "true", "yes")
+
 
 config = Config()

@@ -97,6 +97,21 @@ def _read_text(path):
 _PDF_OCR_MIN_CHARS = 30
 
 
+def ocr_usage(path: str) -> dict:
+    # 이 PDF에서 OCR이 실제로 쓰이는지(=텍스트 레이어가 없는 페이지가 있는지) 조사한다.
+    # OCR 경로는 실측 문자 정확도가 낮으므로(ocr_eval 참조), 리포트가 "OCR 사용 여부"를
+    # 명시해야 데이터 품질을 오해하지 않는다. PDF가 아니면 사용 안 함으로 본다.
+    if not path.lower().endswith(".pdf"):
+        return {"total_pages": 0, "ocr_pages": 0, "used": False}
+    try:
+        from pypdf import PdfReader
+        pages = [(p.extract_text() or "").strip() for p in PdfReader(path).pages]
+    except Exception:
+        return {"total_pages": 0, "ocr_pages": 0, "used": False}
+    n = sum(1 for t in pages if len(t) < _PDF_OCR_MIN_CHARS)
+    return {"total_pages": len(pages), "ocr_pages": n, "used": n > 0}
+
+
 def _load_pdf(path):
     from pypdf import PdfReader
 

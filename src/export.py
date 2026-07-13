@@ -105,6 +105,19 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
     hr = validation.get("hallucination_rate", 0)
     dr = validation.get("duplicate_rate", 0)
     score = validation["quality_score"]
+
+    # OCR 판정: 자기비교(source_span==input)로는 입증할 수 없으므로, ① OCR을 실제로 썼는지와
+    # ② 썼다면 독립 측정(텍스트레이어 vs 렌더+OCR)한 문자 정확도를 그대로 노출한다.
+    _ocr = meta.get("ocr") or {}
+    _m = _ocr.get("measure") or {}
+    if not _ocr.get("used"):
+        ocr_val, ocr_ok = "OCR 미사용(텍스트 레이어 추출)", None
+    elif _m.get("pages"):
+        ocr_val = f"{_m['accuracy']}% (CER {_m['cer']}, {_m['pages']}쪽 독립 측정)"
+        ocr_ok = _m["accuracy"] >= config.std_ocr
+    else:
+        ocr_val, ocr_ok = f"OCR 사용({_ocr.get('ocr_pages')}쪽) — 미측정(OCR_EVAL=1로 측정)", None
+
     rows = [
         ("최종 품질", f"{config.std_quality}점 이상(A)", f"{score}점 ({validation.get('grade', '-')})",
          score >= config.std_quality),
@@ -116,7 +129,7 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         ("중복률", f"{config.std_duplicate_max}% 이하", f"{dr}%", dr <= config.std_duplicate_max),
         ("메타데이터 완전성", "100%", "100%" if validation.get("metadata_complete") else "미완",
          bool(validation.get("metadata_complete"))),
-        ("OCR 정확도", f"{config.std_ocr}% 이상", "입력 단계 기준(런타임 미측정)", None),
+        ("OCR 정확도", f"{config.std_ocr}% 이상", ocr_val, ocr_ok),
     ]
     met = sum(1 for *_, ok in rows if ok is True)
     checkable = sum(1 for *_, ok in rows if ok is not None)
@@ -134,6 +147,15 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 환각 조문 제거: {validation.get('hallucinated_articles_dropped', 0)}건 "
         "(원문에 없는 조문 인용 레코드 삭제)",
         f"- 초단답(30자 미만): {validation.get('short_answer_count', 0)}건 (검수 권장)",
+    ]
+    _rw = validation.get("rewrite")
+    if _rw and _rw.get("targeted"):
+        lines.append(
+            f"- 저근거 재작성: 대상 {_rw['targeted']}건 중 **{_rw['rewritten']}건 채택** "
+            f"(평균 근거성 {_rw['mean_before']} → **{_rw['mean_after']}**). "
+            "근거성이 실제로 오르고 새 환각이 없을 때만 채택."
+        )
+    lines += [
         f"- 부정문 의미반전 위험: {validation.get('negation_mismatch_count', 0)}건 "
         "(원문 부정어가 답변에서 사라짐 — 검수 우선)",
     ]
@@ -154,8 +176,11 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
         f"- 중복률 정의: **제거된 중복 레코드 수 ÷ 전체 레코드 수** "
         f"({validation.get('duplicates_removed', 0)}/{validation.get('duplicates_removed', 0) + rows_n} 기준, "
         "질문·답변 완전일치 쌍 제거).",
-        "- OCR 정확도: 원문 PDF와의 CER/WER를 런타임에 측정하지 않으므로 **미측정(N/A)**으로 둔다"
-        "(`source_span`은 `input`과 동일한 값이라 자기비교로는 OCR을 입증할 수 없다).",
+        "- OCR 정확도: `source_span`은 `input`과 같은 값이라 **자기비교로는 입증 불가**. 대신 "
+        "**독립 측정**한다 — PDF 텍스트 레이어(참조) vs 같은 쪽을 300DPI로 렌더링해 OCR한 결과(가설)의 "
+        "CER/WER. 텍스트 레이어가 있는 PDF는 OCR을 쓰지 않으므로 'OCR 미사용'으로 표기한다. "
+        "(참고: Tesseract 한국어 실측 문자 정확도는 60%대로 기준 99%에 크게 못 미치므로, "
+        "**스캔 PDF 입력은 텍스트 품질 저하를 감수해야 한다**.)",
         "",
         "## 다양성 (학습 시 암기·누수 위험 판단용)",
         f"- 소스 문서 수: {validation.get('unique_sources', 0)} / 고유 원문 청크(input): **{uniq_in}개**",
