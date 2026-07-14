@@ -1,0 +1,25 @@
+name: test
+
+# main으로의 push와 PR에서 검증 매트릭스(docs/tests.md)를 실행한다.
+# 테스트는 conftest.py가 OLLAMA_HOST를 도달 불가로 고정해 LLM 없이 결정론적으로 돈다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: pytest
+        run: python -m pytest tests/ -q
