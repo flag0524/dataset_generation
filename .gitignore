@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 
+# 프로젝트 전용 가상환경 (requirements.txt로 각자 생성)
+.venv/
+
 # 생성 산출물 (파이프라인 출력)
 output/
 
