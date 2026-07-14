@@ -222,6 +222,11 @@ function icon(d) {
 }
 const dlIcon = icon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>');
 
+// innerHTML에 넣기 전 HTML 특수문자를 이스케이프한다. domain/expert/issues 값은 현재
+// 화이트리스트를 거치지만(pipeline._classify_domain), 방어를 값의 출처가 아니라 렌더링
+// 지점에 두어 향후 로직 완화 시 저장형 XSS로 번지는 것을 원천 차단한다(dashboard.html과 동일).
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
 // 도메인 접두 산출물명을 안전하게 인코딩해 다운로드 링크를 만든다(한글 파일명 대응).
 function dl(artifacts, key, label) {
   const name = artifacts && artifacts[key];
@@ -240,8 +245,8 @@ function renderResult(d) {
   box.innerHTML = `
     <p class="card-title"><span class="step-no">2</span> 생성 결과</p>
     <div class="result-head">
-      <span class="pill ${cls}">${dot} ${d.status}</span>
-      <span class="meta-line">도메인 <strong>${d.domain}</strong> · ${d.expert} · LLM <strong>${d.llm_mode}</strong></span>
+      <span class="pill ${cls}">${dot} ${esc(d.status)}</span>
+      <span class="meta-line">도메인 <strong>${esc(d.domain)}</strong> · ${esc(d.expert)} · LLM <strong>${esc(d.llm_mode)}</strong></span>
     </div>
     <div class="grid">
       <div class="metric"><div class="k">품질 점수</div><div class="v">${d.quality_score}</div></div>
@@ -258,13 +263,13 @@ function renderResult(d) {
       ${dl(d.artifacts, "unsloth_sharegpt", "ShareGPT")}
       ${dl(d.artifacts, "report", "리포트")}
     </div>
-    ${d.issues && d.issues.length ? '<p class="issues">이슈: ' + d.issues.join(", ") + '</p>' : ''}`;
+    ${d.issues && d.issues.length ? '<p class="issues">이슈: ' + d.issues.map(esc).join(", ") + '</p>' : ''}`;
   box.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function renderError(msg) {
   const box = $("result"); box.style.display = "block";
-  box.innerHTML = `<p class="card-title"><span class="step-no" style="background:var(--bad)">!</span> 오류</p><p class="issues">${msg}</p>`;
+  box.innerHTML = `<p class="card-title"><span class="step-no" style="background:var(--bad)">!</span> 오류</p><p class="issues">${esc(msg)}</p>`;
 }
 </script>
 </body>
