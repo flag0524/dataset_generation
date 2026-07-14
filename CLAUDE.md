@@ -17,15 +17,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 명령어
 
+최초 1회 — 프로젝트 전용 가상환경을 만든다.
+
 ```bash
-pip install -r requirements.txt
-python -m pytest tests/ -q                                         # 검증 매트릭스(tests.md)
-python -m pytest tests/test_pipeline.py::test_t6_validation -q     # 단일 테스트
-python -c "from src.runner import run; run('samples/sample_admin.txt')"  # 파이프라인 1회
-python -m uvicorn web.app:app --reload                             # 웹 UI :8000
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt   # Windows
+# .venv/bin/python -m pip install -r requirements.txt         # macOS/Linux
 ```
 
-웹 서버는 반드시 `python -m uvicorn`으로 띄운다. 맨몸 `uvicorn`은 PATH상 다른 파이썬(의존성 미설치)이 잡혀 `No module named 'olefile'` 등 런타임 오류가 난다.
+이후 모든 명령은 **`.venv`의 파이썬으로** 실행한다.
+
+```bash
+.venv/Scripts/python.exe -m pytest tests/ -q                                        # 검증 매트릭스(tests.md)
+.venv/Scripts/python.exe -m pytest tests/test_pipeline.py::test_t6_validation -q    # 단일 테스트
+.venv/Scripts/python.exe -c "from src.runner import run; run('samples/sample_admin.txt')"  # 파이프라인 1회
+.venv/Scripts/python.exe -m uvicorn web.app:app --reload                            # 웹 UI :8000
+```
+
+**인터프리터를 섞지 마라.** 이 머신에는 시스템 파이썬이 여러 개 있고(`Programs\Python\Python311`, `hermes-agent\venv` 등) 각각 설치된 패키지가 다르다. 의존성이 없는 쪽으로 서버를 띄우면 업로드 시점에야 `No module named 'olefile'`(HWP), `pdfplumber` 부재(신구조문대비표 열 분리가 조용히 꺼짐) 같은 오류가 난다. `.venv`는 인터프리터를 하나로 고정해 이 문제를 없앤다.
+
+셸에 `python`이라고만 치면 PATH상 어느 파이썬이 잡힐지 알 수 없으므로, 활성화(`.venv\Scripts\activate`)하지 않은 셸에서는 위처럼 `.venv`의 파이썬을 경로로 직접 지정하라.
+
+참고: Windows에서 `.venv\Scripts\python.exe`를 실행하면 프로세스가 2개로 보인다(런처 + 실제 인터프리터). 자식이 베이스 파이썬 경로로 표시되지만 `sys.prefix`는 `.venv`를 가리키며, 포트를 잡는 쪽도 자식이다. 정상 동작이니 중복 서버로 오인하지 마라.
 
 런타임 동작은 환경 변수로 제어한다(`src/config.py`). 주요 값: `USE_MOCK_LLM`(기본 auto, `false`로 두면 실제 Ollama 강제), `OLLAMA_HOST`/`OLLAMA_MODEL`, `LLM_CONCURRENCY`(STEP4 동시 호출), `OUTPUT_DIR`, 검증 게이트 임계값(`MIN_ROWS` 등 — env로 조정 가능, 기본값은 TRD §5와 동일).
 
