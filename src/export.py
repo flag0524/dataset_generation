@@ -102,6 +102,8 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
 
     eg = validation.get("entity_grounding")
     ms = validation.get("mean_semantic")
+    gs = validation.get("mean_gold_semantic")
+    gm = validation.get("gold_matched", 0)
     hr = validation.get("hallucination_rate", 0)
     dr = validation.get("duplicate_rate", 0)
     score = validation["quality_score"]
@@ -125,6 +127,9 @@ def write_report(meta: dict, validation: dict, path: str, extraction_mode: str =
          f"{eg}" if eg is not None else "N/A(엔티티 없음)", None if eg is None else eg >= config.std_grounding),
         ("의미 유사도", f"{config.std_semantic} 이상",
          f"{ms}" if ms is not None else "N/A(SEMANTIC_ENABLED=1로 측정)", None if ms is None else ms >= config.std_semantic),
+        ("의미 유사도(gold 기준)", f"{config.std_semantic} 이상",
+         f"{gs} ({gm}건 매칭)" if gs is not None else "N/A(GOLD_PATH·소스 겹침 필요)",
+         None if gs is None else gs >= config.std_semantic),
         ("환각 의심율", f"{config.std_hallucination_max}% 이하", f"{hr}%", hr <= config.std_hallucination_max),
         ("중복률", f"{config.std_duplicate_max}% 이하", f"{dr}%", dr <= config.std_duplicate_max),
         ("메타데이터 완전성", "100%", "100%" if validation.get("metadata_complete") else "미완",

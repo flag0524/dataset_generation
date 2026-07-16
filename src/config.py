@@ -40,6 +40,12 @@ class Config:
     semantic_enabled: bool = os.getenv("SEMANTIC_ENABLED", "").lower() in ("1", "true", "yes")
     semantic_sample: int = int(os.getenv("SEMANTIC_SAMPLE", "30"))
 
+    # gold 기준 의미 유사도. 손으로 교정한 정답셋(GOLD_PATH)을 절대 기준으로 삼아, 소스가
+    # 겹치는 새 생성 output을 gold output과 의미 비교한다. semantic_enabled와 함께 켤 때만
+    # 동작하며, GOLD_PATH가 비면 스킵한다. 소스 겹침 임계값(토큰 Jaccard) 미만은 매칭 제외.
+    gold_path: str = os.getenv("GOLD_PATH", "")
+    gold_min_overlap: float = float(os.getenv("GOLD_MIN_OVERLAP", "0.6"))
+
     # 환각 조문 제거(국방 보고서 #3). output이 원문에 없는 조문(제N조…)을 인용한 레코드는
     # 사실 오류이므로 데이터셋에서 제거한다. false로 두면 플래그만 하고 남긴다.
     drop_hallucinated_articles: bool = os.getenv("DROP_HALLUCINATED_ARTICLES", "true") != "false"

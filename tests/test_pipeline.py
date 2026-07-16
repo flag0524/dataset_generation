@@ -808,3 +808,45 @@ def test_llm_prompts_carry_injection_guard():
     prompt, system = captured[-1]
     assert _FENCE_OPEN in prompt          # 본문이 울타리로 감싸짐
     assert _INJECTION_GUARD in system     # 시스템 프롬프트에 가드 탑재
+
+
+# gold 기준 의미 유사도: 손 교정본을 절대 기준으로 삼아 소스 겹치는 레코드만 비교한다.
+def test_gold_matches_by_source_and_scores_output(tmp_path):
+    import json
+    from src import gold as goldmod
+    gold_file = tmp_path / "gold.json"
+    gold_file.write_text(json.dumps([
+        {"input": "건설산업기본법 개정안 제안이유 및 주요내용", "output": "정답 답변 A"},
+        {"input": "전혀 다른 외교 조약 비준 동의안 내용", "output": "정답 답변 B"},
+    ], ensure_ascii=False), encoding="utf-8")
+    pairs = goldmod.load_gold(str(gold_file))
+    assert len(pairs) == 2
+
+    # 소스가 gold 1번과 겹치는 생성 레코드 → gold 1번 output과 비교돼야 한다
+    records = [{"input": "건설산업기본법 개정안 제안이유 및 주요내용 추가", "output": "생성 답변"}]
+    captured = []
+
+    def fake_sem(a, b):
+        captured.append((a, b))
+        return 0.9
+
+    res = goldmod.score_against_gold(records, pairs, fake_sem, min_overlap=0.5)
+    assert res["matched"] == 1
+    assert res["mean_gold_semantic"] == 0.9
+    assert captured[0] == ("생성 답변", "정답 답변 A")  # 소스가 겹친 gold와 비교
+
+
+# 소스가 어느 gold와도 안 겹치면 억지 비교하지 않고 매칭 0으로 정직 처리
+def test_gold_no_match_when_source_unrelated():
+    from src import gold as goldmod
+    pairs = [{"input": "건설 하도급 대금 지급 보증", "output": "정답"}]
+    records = [{"input": "금융 파생상품 위험 관리 기준", "output": "생성"}]
+    res = goldmod.score_against_gold(records, pairs, lambda a, b: 1.0, min_overlap=0.6)
+    assert res["matched"] == 0
+    assert res["mean_gold_semantic"] is None
+
+
+# gold 파일이 없거나 깨지면 조용히 빈 리스트(파이프라인 무손상)
+def test_gold_load_missing_file():
+    from src import gold as goldmod
+    assert goldmod.load_gold("없는_파일.json") == []
