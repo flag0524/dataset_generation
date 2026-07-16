@@ -11,6 +11,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .config import config
+from .pipeline import _INJECTION_GUARD, _fence
 from .validate import _entities, _entity_grounding, _grounding
 
 _MIN_LEN, _MAX_LEN = 32, 137
@@ -24,8 +25,8 @@ def _rewrite_one(r, doc, llm):
         "- 원문에 없는 사실·조문·용어를 새로 만들지 마라.\n"
         "- 기존답변의 의미는 유지하되, 원문 어휘를 최대한 살려 32~137자로 쓴다.\n"
         '반드시 JSON만: {"a":""}\n\n'
-        f"[원문]\n{src}\n\n[기존답변]\n{r['output']}",
-        system="너는 원문 표현을 충실히 보존하는 한국어 법률 문서 요약가다.",
+        f"[원문]\n{_fence(src)}\n\n[기존답변]\n{r['output']}",
+        system="너는 원문 표현을 충실히 보존하는 한국어 법률 문서 요약가다." + _INJECTION_GUARD,
     )
     if not isinstance(data, dict):
         return None
