@@ -172,6 +172,19 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
                             for r in judged[:config.semantic_sample]) if s is not None]
         mean_semantic = round(sum(sims) / len(sims), 3) if sims else None
 
+    # 8.5) gold 기준 의미 유사도(절대 기준). 손으로 교정한 정답셋과 소스가 겹치는 레코드만,
+    #      유사도(생성output, gold output)로 잰다. output↔input 자기비교와 달리 절대 합격선을
+    #      세울 수 있다. semantic_enabled + GOLD_PATH 지정 시에만 동작.
+    mean_gold_semantic = None
+    gold_matched = 0
+    if config.semantic_enabled and config.gold_path and judged:
+        from . import semantic, gold as goldmod
+        gres = goldmod.score_against_gold(
+            judged[:config.semantic_sample], goldmod.load_gold(config.gold_path),
+            semantic.semantic_similarity, config.gold_min_overlap)
+        mean_gold_semantic = gres["mean_gold_semantic"]
+        gold_matched = gres["matched"]
+
     # 9) RAGAS 스타일 자동평가(LLM 심판) — faithfulness(원문 근거)·answer_relevancy(질문 적합).
     #    라이브러리 대신 로컬 LLM으로 핵심 지표만 계산한다(옵인·표본).
     ragas = None
@@ -216,6 +229,8 @@ def run_validation(datasets: dict, unsloth: dict, records: list, llm=None) -> di
         "hallucination_rate": hallucination_rate,
         "hallucinated_articles_dropped": hallucinated_articles_dropped,
         "mean_semantic": mean_semantic,
+        "mean_gold_semantic": mean_gold_semantic,
+        "gold_matched": gold_matched,
         "ragas": ragas,
         "metadata_complete": metadata_complete,
         "category_dist": category_dist,
