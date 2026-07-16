@@ -11,6 +11,7 @@
 # 임베딩은 매칭된 output 쌍에만 돌려 비용을 줄인다. 소스가 안 겹치는 도메인은 매칭 0으로
 # 정직하게 처리한다(무관한 gold와 억지 비교하지 않음).
 import json
+import os
 import re
 
 _WS = re.compile(r"\s+")
@@ -25,7 +26,21 @@ def _tokens(s: str) -> set:
 
 
 def load_gold(path: str) -> list:
-    """gold JSON에서 (input, output) 쌍을 읽는다. 파일·형식 오류 시 빈 리스트."""
+    """gold (input, output) 쌍을 읽는다. path가 폴더면 그 안 *.json을 전부 합쳐 로드해
+    여러 도메인 gold를 한꺼번에 다룬다. 파일이면 그 파일만. 오류 시 빈 리스트."""
+    import glob
+    if os.path.isdir(path):
+        files = sorted(glob.glob(os.path.join(path, "*.json")))
+    else:
+        files = [path]
+    pairs = []
+    for f in files:
+        pairs.extend(_load_one(f))
+    return pairs
+
+
+def _load_one(path: str) -> list:
+    # gold 파일 하나에서 (input, output) 쌍을 뽑는다.
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -81,3 +96,49 @@ def score_against_gold(records: list, gold: list, semantic_fn, min_overlap: floa
     if not sims:
         return {"matched": 0, "mean_gold_semantic": None}
     return {"matched": len(sims), "mean_gold_semantic": round(sum(sims) / len(sims), 3)}
+
+
+def curate_candidates(records: list, min_grounding: float = 0.4,
+                      min_len: int = 32, max_len: int = 137) -> list:
+    """검증된 산출물에서 gold 후보로 쓸 만한 고품질 레코드만 골라낸다.
+
+    엄격 기준(모두 만족): grounded=True · 근거성 ≥ min_grounding · 환각 엔티티 없음 ·
+    output 길이 정상(초단답·과장답 제외). 반환 레코드에는 '후보'임을 명시하는
+    metadata.gold_status='candidate'를 달아, 사람 검토 전에는 신뢰 gold와 구분한다.
+
+    주의: 이건 '일관성 기준(consistency)'일 뿐 사람 검증(verified) gold가 아니다.
+    자동 통과분을 그대로 gold로 쓰면 생성물을 생성물과 비교하는 순환이 되므로,
+    반드시 사람이 검토·수정한 뒤 신뢰 gold로 승격해야 한다.
+    """
+    out = []
+    for r in records:
+        md = r.get("metadata") or {}
+        ans = r.get("output") or ""
+        if not md.get("grounded"):
+            continue
+        if (md.get("grounding") or 0) < min_grounding:
+            continue
+        if md.get("hallucinated_entities"):
+            continue
+        if not (min_len <= len(ans) <= max_len):
+            continue
+        rec = dict(r)
+        rec["metadata"] = {**md, "gold_status": "candidate"}
+        out.append(rec)
+    return out
+
+
+def build_candidate_file(dataset_path: str, out_path: str, **kw) -> int:
+    """dataset_path(생성 산출물 JSON)에서 후보를 골라 out_path에 저장하고 건수를 돌려준다.
+    사용 예: python -c "from src.gold import build_candidate_file as b; b('output/금융_dataset.json', 'gold/금융.json')"
+    """
+    try:
+        with open(dataset_path, encoding="utf-8") as f:
+            records = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return 0
+    cand = curate_candidates(records, **kw)
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(cand, f, ensure_ascii=False, indent=2)
+    return len(cand)
