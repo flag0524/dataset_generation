@@ -850,3 +850,42 @@ def test_gold_no_match_when_source_unrelated():
 def test_gold_load_missing_file():
     from src import gold as goldmod
     assert goldmod.load_gold("없는_파일.json") == []
+
+
+# gold 다도메인: GOLD_PATH가 폴더면 안의 *.json을 전부 합쳐 로드한다.
+def test_gold_load_directory_merges_domains(tmp_path):
+    import json
+    from src import gold as goldmod
+    gdir = tmp_path / "gold"
+    gdir.mkdir()
+    (gdir / "건설.json").write_text(json.dumps(
+        [{"input": "건설 하도급 대금", "output": "정답1"}], ensure_ascii=False), encoding="utf-8")
+    (gdir / "금융.json").write_text(json.dumps(
+        [{"input": "금융 파생상품 규제", "output": "정답2"},
+         {"input": "자본 적정성 기준", "output": "정답3"}], ensure_ascii=False), encoding="utf-8")
+    pairs = goldmod.load_gold(str(gdir))
+    assert len(pairs) == 3  # 두 파일 합침
+    outs = {p["output"] for p in pairs}
+    assert outs == {"정답1", "정답2", "정답3"}
+
+
+# gold 큐레이션: 고품질 레코드만 후보로 통과하고 gold_status='candidate'를 단다.
+def test_gold_curate_filters_low_quality():
+    from src import gold as goldmod
+    recs = [
+        # 통과: grounded, 근거성 0.5, 환각 없음, 길이 정상
+        {"output": "건설공사 대금은 준공검사 완료일부터 60일 이내에 지급하여야 한다고 규정한다",
+         "metadata": {"grounded": True, "grounding": 0.5, "hallucinated_entities": []}},
+        # 탈락: grounded=False
+        {"output": "이 내용은 충분히 길지만 근거성이 확인되지 않은 답변 문장이라 제외된다고 본다",
+         "metadata": {"grounded": False, "grounding": 0.5}},
+        # 탈락: 환각 엔티티 있음
+        {"output": "제99조에 따라 발주처는 대금을 즉시 지급해야 한다고 명확히 규정하고 있다고 본다",
+         "metadata": {"grounded": True, "grounding": 0.6, "hallucinated_entities": ["제99조"]}},
+        # 탈락: 초단답(32자 미만)
+        {"output": "짧은 답변", "metadata": {"grounded": True, "grounding": 0.7}},
+    ]
+    cand = goldmod.curate_candidates(recs, min_grounding=0.4)
+    assert len(cand) == 1
+    assert cand[0]["metadata"]["gold_status"] == "candidate"
+    assert cand[0]["metadata"]["grounded"] is True  # 원본 메타 보존

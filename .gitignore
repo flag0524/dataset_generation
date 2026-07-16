@@ -8,6 +8,9 @@ __pycache__/
 # 생성 산출물 (파이프라인 출력)
 output/
 
+# gold 정답셋(검증 데이터) — 대용량 로컬 운영물. docs/gold_reference.md 참고해 시드한다.
+gold/
+
 # 작업 중 생성한 검증용 캡처 이미지
 docs/*.png
 *.png
